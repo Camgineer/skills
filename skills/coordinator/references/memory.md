@@ -2,7 +2,7 @@
 
 ## Memory
 
-Project memory lives in `.openprojects/memory/` in the project root. Every member and every agent in the project shares it, and it outlives every chat. Whatever an agent learns survives only if it is written here.
+Project memory lives in `.coordinator/memory/` in the project root. Every member and every agent in the project shares it, and it outlives every chat. Whatever an agent learns survives only if it is written here.
 
 Save what a fresh agent would otherwise have to ask again or spend effort rediscovering, and that will stay true: how members want to work, decisions they made, facts about the project.
 
@@ -26,7 +26,7 @@ Save what a fresh agent would otherwise have to ask again or spend effort redisc
 
 ### Format
 
-Write each memory to its own file, `.openprojects/memory/<slug>.md`, organized by topic rather than by date:
+Write each memory to its own file, `.coordinator/memory/<slug>.md`, organized by topic rather than by date:
 
 ```markdown
 ---
@@ -53,15 +53,15 @@ metadata:
 
 ## Thread files
 
-`.openprojects/threads/<slug>.md` holds one thread's state. The coordinator creates it, and the thread keeps it current.
+`.coordinator/threads/<slug>.md` holds one thread's state. The coordinator creates it, and the thread keeps it current.
 
 ```markdown
 # Fix login bug
 status: running
 chat: <the thread chat's id>
 asked-by: Sam, 2026-10-17 14:02
-branch: op/fix-login-bug
-worktree: .openprojects/worktrees/fix-login-bug
+branch: thread/fix-login-bug
+worktree: .coordinator/worktrees/fix-login-bug
 pr: none
 
 ## Ask
@@ -75,7 +75,7 @@ pr: none
 
 ## Shared files
 
-`.openprojects/files/` holds anything another thread or a later question will need, such as cleaned data, computed results or long write-ups. Throwaway drafts and scratch work stay out of it.
+`.coordinator/files/` holds anything another thread or a later question will need, such as cleaned data, computed results or long write-ups. Throwaway drafts and scratch work stay out of it.
 
 - Put new outputs in a subdirectory named for your thread, unless the member named a path.
 - Several agents may write here at once, and the last write silently replaces earlier ones. Re-read a file just before you change it and keep the edit small. After changing a file that already existed, read it back before relying on it, and re-apply your change to the current version if another write replaced it.

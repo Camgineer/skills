@@ -33,7 +33,7 @@ When the PR for your branch has already been merged, follow-up work is a fresh c
 - Before acting, read the PR's current state fresh. Notices can arrive late and out of order.
 - Skip an event that echoes a comment or review you posted, and one that duplicates an event you already handled. Everything else on your own PR needs a visible outcome: a pushed fix or a comment.
 - An approval is never a reason to hold a fix or ask first. A push that resets the approval count is an accepted cost of getting to green. When a push dismissed an approval, say once whose review the PR needs again.
-- Comment on GitHub only when it is needed, for example to explain why a review suggestion is incorrect or cannot be done. End every comment you post with a blank line, a `---` line, and `_Posted by an OpenProjects agent_`.
+- Comment on GitHub only when it is needed, for example to explain why a review suggestion is incorrect or cannot be done. End every comment you post with a blank line, a `---` line, and `_Posted by an agent_`.
 
 ## CI red
 

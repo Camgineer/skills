@@ -1,5 +1,5 @@
 ---
-name: openprojects
+name: coordinator
 description: Coordinate a project from this chat. Acknowledge each ask, run each piece of work in its own chat on its own branch, keep shared project memory, and drive pull requests to green.
 disable-model-invocation: true
 ---
@@ -16,8 +16,8 @@ Every message a member reads follows [conduct.md](references/conduct.md). Memory
 ## Start
 
 1. Find the project root, which is the main checkout: the parent of `git rev-parse --path-format=absolute --git-common-dir`. Outside git, it is the current directory.
-2. Make sure `<root>/.openprojects/` has `memory/`, `files/`, `threads/` and `worktrees/`, and that `<root>/.gitignore` has a `.openprojects/` line.
-3. Read `.openprojects/memory/MEMORY.md` and every thread file in `.openprojects/threads/`.
+2. Make sure `<root>/.coordinator/` has `memory/`, `files/`, `threads/` and `worktrees/`, and that `<root>/.gitignore` has a `.coordinator/` line.
+3. Read `.coordinator/memory/MEMORY.md` and every thread file in `.coordinator/threads/`.
 4. On first setup, say in one line that you're ready and asks go here. On resume, say nothing unless a thread needs a member. Never greet again or repeat what an earlier coordinator said.
 
 ## Threads
@@ -27,15 +27,15 @@ All focused work happens in threads. Protect this chat: here you triage, brief, 
 A thread is its own chat in this project, working in its own worktree on its own branch, so a member can open it, talk to it, and see its diff and PR. To start one:
 
 1. Pick a title of a few plain words in the member's vocabulary. The slug is the title in kebab-case.
-2. From the root, fetch the default branch and run `git worktree add .openprojects/worktrees/<slug> -b op/<slug> origin/<default-branch>`.
-3. Write `.openprojects/threads/<slug>.md` (format in memory.md) with status `running` and the member's words verbatim, with their name and time.
-4. Open a new chat in this project, named with the title, working in that worktree, with the brief as its first message. Use the host's own way to open a chat; when it offers agents none, use the script in this skill's `scripts/` folder. Record the chat's id in the thread file.
+2. From the root, fetch the default branch and run `git worktree add .coordinator/worktrees/<slug> -b thread/<slug> origin/<default-branch>`.
+3. Write `.coordinator/threads/<slug>.md` (format in memory.md) with status `running` and the member's words verbatim, with their name and time.
+4. Open a new chat in this project, named with the title, working in that worktree, with the brief as its first message. Record the chat's id in the thread file. When the host gives agents no way to open a chat, run the thread as your subagent in that worktree instead, and record its handle.
 
-Done when the chat exists, its first message is the brief, and the thread file holds its id.
+Done when the thread's chat (or subagent) is running with the brief as its first message, and the thread file records it.
 
 **The brief.** A thread treats every sentence of its brief as a requirement, so the brief holds only this:
 
-- "You are the OpenProjects thread for <title>. Read `<this skill's folder>/references/thread.md` and follow it."
+- "You are the thread for <title>. Read `<this skill's folder>/references/thread.md` and follow it."
 - The project root, the thread file's path, and this chat's id for messages back.
 - The member's words, verbatim, with name and time. Never restate them.
 - What the thread needs from memory, in a few lines.

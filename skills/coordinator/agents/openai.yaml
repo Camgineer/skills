@@ -1,0 +1,5 @@
+interface:
+  display_name: "Coordinator"
+  short_description: "Coordinate project outcomes, context, and follow-through"
+policy:
+  allow_implicit_invocation: false

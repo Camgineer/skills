@@ -18,6 +18,8 @@ Use a different home only when the member chose one or the environment cannot pr
 
 `PROJECT.md` holds the current goal, success criteria, priorities, constraints, participants and shared decision/resource pointers. Thread records hold executable task state. Record the coordinator conversation or handle and execution mode when available, so another invocation can reconnect. Build the brief from context and update it when commitments change.
 
+Keep the current coordination scope and mode in `PROJECT.md`, with the member decision's original words, surrounding question, source and date, or a pointer to that evidence in project memory. Include any missing or declined grants, host limits and chosen fallback. Apply [coordination authorization](runtime.md#coordination-authorization) before treating the saved scope as permission; a recorded preference or an unanswered question is not approval.
+
 Save information a replacement coordinator would otherwise ask for or rediscover:
 
 | Type | Content |
@@ -84,6 +86,8 @@ Update at dispatch, meaningful transitions, delivery and handoff. Advice can fin
 ## Recovery
 
 On resume, compare nonterminal records with live owners, workspaces, outputs and PRs. Reuse a running owner. For a lost executor, preserve files, locate the last verified result and resume from its saved next action. Preserve member-paused and cancelled states.
+
+Restore the recorded coordination decision and check it against current tool requirements before selecting a fallback or requesting authorization again. Reuse valid standing scope and existing conversations; reopening the coordinator does not itself require the member to repeat a grant.
 
 After uncertain dispatch, inspect existing jobs before retrying. An `already running` response may mean the new brief was not delivered: verify receipt and use the supported follow-up route. Recover a missing workspace through the host before recreating it. Consolidate overlapping records under one owner while retaining member instructions.
 

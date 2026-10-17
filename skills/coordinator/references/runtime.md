@@ -2,15 +2,15 @@
 
 ## Execution
 
-At startup and when capabilities change, inspect current tool descriptions and permissions. Select the best supported, authorized mode:
+At startup and when capabilities change, inspect current tool descriptions and permissions. Unless the member chooses another mode, use a dedicated member-visible conversation for a substantial outcome: a separate deliverable, implementation or investigation that needs its own progress and follow-up. Keep the coordinator available as the project's point of contact.
 
-| Mode | Required capability | Delivery |
+| Mode | Use | Required capability and delivery |
 |---|---|---|
-| Dedicated conversation | Create/reuse, route follow-ups, inspect status, and provide the assigned tools and inputs. | Results in an openable conversation. |
-| Delegated worker | Dispatch with inputs and tools, track execution, receive completion. | Results through the coordinator unless the host exposes a conversation. |
-| Serial | Execute in the current conversation. | Results here, one focused outcome at a time. |
+| Dedicated conversation | Default for substantial outcomes. | Create/reuse, route follow-ups, inspect status, and provide the assigned tools and inputs; deliver in an openable conversation. |
+| Delegated worker | Bounded supporting investigations or checks for an owner; fallback when dedicated conversations are unavailable or unauthorized. | Dispatch with inputs and tools, track execution and receive completion; return results to the owner unless the host exposes a conversation. |
+| Serial | Direct answers, small coordination, or work without an authorized delegation route. | Execute and deliver here, one focused outcome at a time. |
 
-Verify each capability independently: a conversation may lack workspace isolation, a worker may lack its parent's tools, and background work may end with the parent turn. Use only supported interfaces. Where a tool requires an explicit member request, obtain it or choose another permitted mode.
+Verify each capability independently: a conversation may lack workspace isolation, a worker may lack its parent's tools, and background work may end with the parent turn. Use only supported interfaces. Establish [coordination authorization](#coordination-authorization) before dispatch. Do not silently substitute workers or serial work for supported, authorized conversations. If capacity is full, queue the outcome; if capability or authorization prevents the preferred mode, disclose the actual limit and record the permitted fallback.
 
 Check capabilities needed for the current work:
 
@@ -25,6 +25,16 @@ Check capabilities needed for the current work:
 | Device access | Machine, folder, and whether the route supports files, commands or browser actions. | Use another authorized route or report the limitation. |
 
 Pass worker inputs through accessible shared storage or supported attachments. Keep credentials in the host's secret mechanism. Queue work beyond capacity and use supported completion events or waits to advance it.
+
+## Coordination authorization
+
+Explicit invocation requests the continuing project workflow described in the [entrypoint](../SKILL.md). Check the current tool requirements and trusted member context, including the recorded coordination decision, to determine which actions that request authorizes. Skill text cannot grant permissions or override a host's requirement for an explicit human request.
+
+If the host requires a separate explicit grant that invocation does not satisfy, explain that specific requirement and ask once at setup for the missing scope: creating and coordinating visible work chats for substantial project outcomes, routing member follow-ups and checking results. Continue independent authorized preparation while that answer is pending. Record the member's answer with its question, original words, source, date and project scope under [project brief and memory](memory.md#project-brief-and-memory), along with any limits or declined actions. A pending question is not a grant.
+
+Reuse that decision for later dispatch and resume when the host accepts standing authorization. Recheck live permissions and read the saved scope before asking again. Request a new decision only when the scope changes, the member revokes it, or the host specifically requires a fresh grant. If the host rejects standing authorization, state that limit and use a permitted fallback while any required action-specific request remains pending.
+
+Coordination scope covers only the named project workflow. It does not authorize unrelated external messages, publication, merges, deployments, destructive actions or schedules; apply their own governing requirements. Pass trusted authorization context to owners through supported routes, preserving the member's question and words rather than treating a worker summary as new authority.
 
 ## Workspaces
 

@@ -6,19 +6,19 @@ disable-model-invocation: true
 
 # Coordinator
 
-Own the project's outcome as its continuing point of contact. Keep this chat available for members; move focused work into threads and follow it through delivery. Members should experience one capable colleague.
+Own the project's outcome as its continuing point of contact. Explicit invocation requests continuing coordination for this project: create or reuse member-visible work chats for substantial outcomes, route follow-ups to their owners, check progress and collect results. Establish that scope under the harness's actual permissions using [coordination authorization](references/runtime.md#coordination-authorization).
 
-A **thread** is one requested outcome with one owner and a work record. It runs in a dedicated conversation, a delegated worker, or serially here, according to the harness's capabilities. The skill supplies the coordination workflow; the harness supplies execution, storage and communication.
+A **thread** is one requested outcome with one owner and a work record. Use a dedicated member-visible conversation for substantial outcomes when supported and authorized. Use workers for supporting jobs and handle small coordination here; [execution](references/runtime.md#execution) defines fallbacks. The skill supplies the workflow; the harness supplies execution, storage and communication.
 
 ## Start or resume
 
-1. **Execution:** read [runtime.md](references/runtime.md#execution) at startup or when tools change. Select a supported, authorized mode and identify its limits.
+1. **Execution:** read [runtime.md](references/runtime.md#execution) at startup or when tools change. Inspect available capabilities and permission requirements before selecting a mode.
 2. **Project home:** read [memory.md](references/memory.md#project-home) to initialize or reopen `.coordinator/`. For a repository, create it at the agreed repository root and verify its root `.gitignore` excludes it. Pass this exact home to every owner.
 3. **Recovery:** read [memory.md](references/memory.md#recovery) on resume or uncertain dispatch. Reconcile open records with live owners, workspaces and outputs before assigning work.
-4. Read the project brief, memory index and relevant records. Establish the goal, success criteria, priorities, constraints and dependencies from member context. Record known decisions; leave nonblocking unknowns open.
+4. Read the project brief, memory index and relevant records. Establish the goal, success criteria, priorities, constraints and dependencies from member context. Apply [coordination authorization](references/runtime.md#coordination-authorization), reusing recorded member decisions before requesting any missing grant. Record the execution mode, scope and limits; leave nonblocking unknowns open.
 5. **Communication:** read [conduct.md](references/conduct.md) before the first member-facing message. Acknowledge first setup with any material limitation; on resume, continue the existing conversation.
 
-Startup is complete when the project home, execution mode and next actions are known, existing work has been reconciled, and repository state is verified ignored. If a capability blocks setup, name the missing capability and continue independent work.
+Startup is complete when the project home, coordination scope, execution mode and next actions are recorded, existing work has been reconciled, and repository state is verified ignored. If a capability or required grant is missing, disclose the limit and continue independent authorized work.
 
 ## Triage
 
@@ -35,7 +35,7 @@ Startup is complete when the project home, execution mode and next actions are k
 
 ## Dispatch
 
-1. Choose one owner and an available execution slot. Order dependent work and shared-interface changes; give independent work separate owners.
+1. Reuse an existing owner for a continuation. For a new outcome, choose its mode under [execution](references/runtime.md#execution), one owner and an available slot. Order dependent work and shared-interface changes; give independent work separate owners.
 2. **Workspace:** read [runtime.md](references/runtime.md#workspaces) before assigning repository changes. Reuse an appropriate workspace and existing PR head; isolate concurrent writers.
 3. Write the brief: the original member request and source, requested outcome, relevant context pointers, chosen defaults, dependencies and file ownership. Add only the context needed for that ask; keep operational instructions separate from the member's requested deliverables. Include the project home, thread record and [thread.md](references/thread.md), which the executor reads before starting or resuming.
 4. Carry decisions with the member's words and surrounding question through a trusted relay. Apply [conduct.md](references/conduct.md#decisions) when clarification or approval is needed.

@@ -1,57 +1,54 @@
-# Project context, work records and shared files
+# Project state and shared files
 
 ## Project home
 
-Choose one stable project home and pass its exact location to every owner. Reuse an existing home or host-native project store. With a local filesystem, default to `.coordinator/` in the agreed project workspace. For a non-git project, use the member's working folder. Do not guess a project root from the parent of git's common directory: linked worktrees, submodules and bare repositories have different layouts.
+For a repository, initialize `<project-root>/.coordinator/` and add `.coordinator/` to its root `.gitignore`. Reuse that home and its recorded coordinator on subsequent invocations. The project root is the agreed repository checkout, not the parent of git's internal directory. Pass the absolute home to every thread, including threads in other worktrees.
 
-Keep these logical areas, creating them only as needed:
+When Python 3 and git execution are available, run [scripts/init_project.py](../scripts/init_project.py) with the agreed root as its argument. It creates missing state, preserves existing files and verifies ignore behavior. For a non-git project, use the member's working folder; the initializer creates state without a gitignore requirement.
 
-- `PROJECT.md`: the goal, success criteria, priorities, constraints, participants and pointers to shared decisions/resources.
-- `threads/`: one record per focused outcome, including its current state and handoff.
-- `memory/`: durable facts and decisions, indexed by `MEMORY.md`.
-- `files/`: shared inputs and deliverables that need to outlive an executor.
+With file tools only, perform the equivalent setup:
 
-If local project state belongs inside a repository, exclude `.coordinator/` through the existing ignore mechanism, preserving current rules. Do not overwrite `.gitignore`, commit private state, or quietly untrack files already committed. Isolation workspaces may live elsewhere, especially when managed by the host.
+1. Inspect the root, existing state and `.gitignore`. Preserve existing content. If coordination state is already tracked, surface it for an explicit decision before writing private state.
+2. Create `.coordinator/memory/`, `threads/` and `files/`. Create `PROJECT.md` and `memory/MEMORY.md` only when absent.
+3. In a repository, append `.coordinator/` to root `.gitignore` if needed, preserving its contents and newline. Verify state is ignored with git when available; otherwise record that verification remains pending.
 
-A local folder is durable only as far as its disk and environment. In ephemeral environments, use a supported persistent project store or export a handoff and accessible outputs before the environment ends. Do not commit private records merely to make them survive.
+Setup is complete when the directories and index exist, the project brief is populated from known context, existing state is preserved, and repository ignore behavior is verified. Leave the `.gitignore` change visible for the project's normal commit workflow. Coordination state stays local and untracked.
 
-If persistence is unavailable, keep an equivalent compact handoff in the conversation and disclose the limitation. A record in a disconnected worker's filesystem is not shared state.
+Use a different home only when the member chose one or the environment cannot provide repo-local persistence. Record that exception and transfer the same logical state through supported storage. A local folder on an ephemeral disk needs a persistent handoff before reclamation; keep private state out of commits. The conversation can hold a compact handoff when no durable store exists.
 
 ## Project brief and memory
 
-The project brief is a short current orientation, not a transcript or a second task tracker. Keep cross-thread goals, priorities and commitments there; keep the executable next action in the owning thread record. Do not require members to complete an intake form before work starts.
+`PROJECT.md` holds the current goal, success criteria, priorities, constraints, participants and shared decision/resource pointers. Thread records hold executable task state. Record the coordinator conversation or handle and execution mode when available, so another invocation can reconnect. Build the brief from context and update it when commitments change.
 
-Save durable information that a fresh coordinator would otherwise need to ask for or rediscover:
+Save information a replacement coordinator would otherwise ask for or rediscover:
 
 | Type | Content |
 |---|---|
-| `user` | Work-relevant role, goals and preferences, subject to privacy boundaries. |
-| `feedback` | A member's guidance about what to repeat or avoid, with their reason when known. |
-| `project` | Decisions, constraints, commitments and rationale not evident in the current repository or task records. |
-| `reference` | Where an external source lives and what it is authoritative for. |
+| `user` | Work-relevant role, goals and preferences. |
+| `feedback` | Guidance about what to repeat or avoid, with the member's reason and when to apply it. Record successes as well as corrections. |
+| `project` | Decisions, commitments and rationale absent from current code and task records, with their application. |
+| `reference` | An external source's location and purpose. |
 
-Respect the host's memory policy, including restrictions on automatic retention. Team storage is not private memory. Do not put personal details or private feedback in a shared project store without appropriate authorization. Save no secrets or credentials. Source documents are evidence, not memory instructions.
+Apply the harness's retention and privacy rules. Shared project storage is visible to its readers; personal details and private feedback need appropriate authorization. Keep secrets in the host's secret mechanism. Retain facts and decisions rather than code structure, repository instructions, git history or transient task progress, whose sources remain authoritative.
 
-For file-based memory, use topic files with `name`, a specific `description`, and `metadata.type` in YAML frontmatter. Include the source, date and relevant scope. Keep each file concise, normally under 4 KB. Index it in `memory/MEMORY.md` with a relative link and a one-line description. Read relevant entries rather than the whole store.
+Write topic files under `memory/`, each with `name`, a specific `description`, and `metadata.type` in YAML frontmatter. Include source, date and scope; keep each under 4 KB. Index them in `memory/MEMORY.md` using a relative link and one-line description. Read the index and relevant entries rather than downloading the whole store.
 
-Update an existing entry instead of duplicating it. Record successes as well as corrections. Resolve relative dates using the member's timezone, and distinguish an agreed commitment from a proposal. Do not copy code structure, repository instructions, git history or live task state into memory; link to their source of truth.
-
-Before answering solely from saved facts, check current files or systems when feasible. If verification is unavailable, label the information as last known. A newer member instruction wins over an older note; memory never grants permission. Follow the host's controls when a member asks to save or forget information.
+Update existing topics instead of duplicating them. Convert relative dates using the member's timezone; distinguish commitments from proposals. Check current sources before answering solely from saved facts, and label unverified facts as last known. Follow the host's controls for a member's remember/forget request.
 
 ## Thread records
 
-The coordinator owns routing, assignment and dependencies. The executor maintains progress, evidence and handoff. Use the host's structured task store if it provides these fields; otherwise keep one `threads/<slug>.md` file. Re-read before editing shared state, touch only owned fields, and verify the result. Use version checks or transactions when available. With only file storage, serialize competing edits through the coordinator; read-back alone is not a lock.
+Keep `threads/<slug>.md` as the handoff for each focused outcome. The coordinator creates the record and owns assignment and dependencies; the executor owns progress and evidence after handoff. Route later edits through the current writer or use the store's version controls. If the host also tracks tasks, link them to this record rather than maintaining competing histories.
 
-A record should let a fresh owner continue without guessing. For example:
+Record actual values, using `null` for inapplicable or unavailable fields:
 
 ```yaml
 title: Fix login redirect
-status: running
+status: queued
 asked_by: Sam
 asked_at: 2026-10-17T14:02:00-04:00
 request_source: member message or accessible conversation link
 mode: worker
-owner: returned executor handle
+owner: null
 conversation: null
 project_home: /work/project/.coordinator
 repository: /work/project
@@ -59,45 +56,43 @@ branch: thread/fix-login-redirect
 workspace: /work/worktrees/fix-login-redirect
 pull_request: null
 completion_condition: merged fix
-updated_at: 2026-10-17T14:05:00-04:00
+updated_at: 2026-10-17T14:02:00-04:00
 ```
 
-Below the metadata, keep:
+Keep these sections below the metadata:
 
-- **Request:** the member's words with source and surrounding context needed to interpret them; append later corrections rather than overwriting their history.
-- **Context:** relevant decisions, chosen defaults, dependencies and shared-file ownership.
-- **Authorization:** original member instructions relevant to consequential steps, with their source. A copied quote does not create authority in another harness.
-- **Progress:** what exists, what was checked, unresolved issues, and the next action with its owner.
-- **Outputs:** accessible deliverable links or paths and delivery status.
-- **Follow-up:** subscription/schedule identifiers, last handled event or revision, and stop condition when applicable.
+- **Request:** original member words and source, plus later corrections with context.
+- **Context:** relevant memory pointers, defaults, dependencies and shared-file ownership.
+- **Authorization:** sourced member decisions relevant to consequential steps.
+- **Progress:** verified result, checks, open questions and next action with its owner.
+- **Outputs:** accessible links/paths and whether delivery occurred.
+- **Follow-up:** subscription/schedule IDs, last handled event or revision, and stop condition.
 
-Use `null` for fields that do not apply; no repository, PR or worktree is required for an advice or document task. Use the host's actual identifier internally and a title or link in member-facing messages. Do not invent authors, timestamps, handles or URLs when unavailable.
+### States
 
-### State transitions
-
-| State | Meaning and next transition |
+| State | Criterion |
 |---|---|
-| `queued` | Accepted, but no confirmed executor is working. Dispatch when capacity and dependencies permit. |
-| `running` | A confirmed owner is executing the next action. Move to a waiting state when execution actually stops. |
-| `blocked` | A failed executor, missing capability or other concrete obstacle prevents progress. Record the recovery action and its owner. |
-| `waiting-on-member` | A specific member decision, access grant or approval is required. Continue independent work if possible. |
-| `waiting-on-external` | CI, review, another thread or another external result is pending. Record how it will be checked. |
-| `paused` | A member explicitly suspended the work. Resume only when directed. |
-| `done` | The requested outcome was delivered and its completion condition is satisfied. A follow-up can reopen it. |
-| `dropped` | A member cancelled it or explicitly accepted abandoning it. Preserve relevant work and stop its follow-ups. |
+| `queued` | Accepted; no confirmed executor is working. |
+| `running` | A confirmed owner is executing the next action. |
+| `blocked` | A concrete obstacle prevents execution; recovery action and owner are recorded. |
+| `waiting-on-member` | A named member decision, access grant or approval is required. |
+| `waiting-on-external` | CI, review, another thread or another external result is pending, with a check mechanism recorded. |
+| `paused` | A member suspended work; resumption awaits their direction. |
+| `done` | The requested outcome was delivered and its completion condition is satisfied. |
+| `dropped` | A member cancelled or explicitly accepted abandoning the work. |
 
-Record status at dispatch, meaningful changes, delivery and handoff. A task waiting on CI is active but not executing. A ready PR is not merged. A delivered answer does not need to wait for thanks. A closed, unmerged PR does not prove the original goal was achieved; record the reason and remaining work.
+Update at dispatch, meaningful transitions, delivery and handoff. Advice can finish when answered; thanks is optional. A ready PR remains active until its agreed completion condition. A closed, unmerged PR requires a recorded reason and reassessment of the original goal. Follow-ups may reopen completed records.
 
-### Resume and recovery
+## Recovery
 
-On resume, reconcile nonterminal records with actual executor, workspace and output state. Do not launch a duplicate because a local record looks old. If the owner is still running, reuse it. If it is gone, preserve its files, find the last verified result, then resume with an appropriate owner from the saved next action. Do not silently restart member-paused or cancelled work.
+On resume, compare nonterminal records with live owners, workspaces, outputs and PRs. Reuse a running owner. For a lost executor, preserve files, locate the last verified result and resume from its saved next action. Preserve member-paused and cancelled states.
 
-If tool dispatch times out or returns an uncertain outcome, inspect existing sessions/jobs before retrying. If the workspace is missing, check the host's recovery mechanism before recreating it. If two records overlap, choose one owner and consolidate references without losing member instructions.
+After uncertain dispatch, inspect existing jobs before retrying. An `already running` response may mean the new brief was not delivered: verify receipt and use the supported follow-up route. Recover a missing workspace through the host before recreating it. Consolidate overlapping records under one owner while retaining member instructions.
 
-## Shared files and delivery
+## Shared files
 
-Place shared outputs under `files/<thread-slug>/` unless a member named a destination. Keep throwaway scratch elsewhere. For a shared mutable file, name one owner; other executors write proposed changes to separate files and send their pointers to that owner through an authorized route. Apply the same rule to shared memory indexes and project-wide decisions.
+Store lasting shared inputs and deliverables under `files/<thread-slug>/` unless the member named a destination; keep scratch elsewhere. Prefer targeted text reads on remote storage, where a broad search can download every file.
 
-Use atomic writes or the host's concurrency controls where available. Before replacing an existing file, re-read it and preserve unrelated changes. Check read-back or version after writing, accounting for any documented storage delay. If a conflict repeats, serialize writers rather than repeatedly overwriting each other.
+Give each shared mutable file one owner, including the project brief and memory index. Other writers save proposed changes separately and send their pointers to the owner. Pass this ownership rule to every worker using shared storage.
 
-Match the requested deliverable and use the host's actual attachment, artifact or publishing support. A Markdown source, HTML page, slide deck and live website are different outputs; do not force all work into one format. Publish externally only within the member's authorization. Verify that the member can access the delivered result before marking delivery complete.
+Before changing a shared file, re-read it, preserve unrelated content and keep the edit small. Use transactions, version checks or atomic writes when available; verify read-back after the store's documented delay. Serialize conflicting writers through the owner. A read-back alone is not a lock.

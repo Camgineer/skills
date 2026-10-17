@@ -18,6 +18,8 @@ It adapts to the tools and permissions the harness actually provides:
 - Delegated workers when available and authorized, with results returned to the coordinator.
 - Serial execution in the current chat when delegation is unavailable.
 
-Shared context uses the host's persistent project store or a local `.coordinator/` directory when appropriate. Local state stays outside version control. If durable storage, background execution or scheduling is unavailable, the coordinator says so and leaves a handoff instead of promising unattended work.
+On startup in a repository, the coordinator creates `.coordinator/` with project context, memory, thread records and shared files, and adds `.coordinator/` to the root `.gitignore`. The included initializer preserves existing state and verifies that git ignores it; equivalent file-tool setup is available when command execution is unavailable. All worktrees share the same recorded project home.
+
+A different storage location is an explicit exception for a chosen destination or an environment that cannot retain repo-local files. If durable storage, background execution or scheduling is unavailable, the coordinator says so and leaves a handoff instead of promising unattended work.
 
 The skill contains the workflow and its supporting references in one folder. It requires no particular vendor, private API or companion service. It cannot add conversation UI, persistent execution, shared storage or permissions to a host that lacks them. Optional host-specific metadata does not change that contract.

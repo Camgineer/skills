@@ -4,13 +4,11 @@
 
 For a repository, initialize `<project-root>/.coordinator/` and add `.coordinator/` to its root `.gitignore`. Reuse that home and its recorded coordinator on subsequent invocations. The project root is the agreed repository checkout, not the parent of git's internal directory. Pass the absolute home to every thread, including threads in other worktrees.
 
-When Python 3 and git execution are available, run [scripts/init_project.py](../scripts/init_project.py) with the agreed root as its argument. It creates missing state, preserves existing files and verifies ignore behavior. For a non-git project, use the member's working folder; the initializer creates state without a gitignore requirement.
-
-With file tools only, perform the equivalent setup:
+Use the harness's file tools or the shell already available in the environment. For a non-git project, use the member's working folder and skip the gitignore step.
 
 1. Inspect the root, existing state and `.gitignore`. Preserve existing content. If coordination state is already tracked, surface it for an explicit decision before writing private state.
 2. Create `.coordinator/memory/`, `threads/` and `files/`. Create `PROJECT.md` and `memory/MEMORY.md` only when absent.
-3. In a repository, append `.coordinator/` to root `.gitignore` if needed, preserving its contents and newline. Verify state is ignored with git when available; otherwise record that verification remains pending.
+3. In a repository, ensure root `.gitignore` has an effective `.coordinator/` rule. Preserve its contents and newline; append the rule if absent or overridden by a later rule. Use `git check-ignore` from the project root to verify `.coordinator/PROJECT.md` and `.coordinator/memory/MEMORY.md` are ignored. If git execution is unavailable, record verification as pending.
 
 Setup is complete when the directories and index exist, the project brief is populated from known context, existing state is preserved, and repository ignore behavior is verified. Leave the `.gitignore` change visible for the project's normal commit workflow. Coordination state stays local and untracked.
 

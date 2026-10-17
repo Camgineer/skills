@@ -19,7 +19,7 @@ It adapts to the tools and permissions the harness actually provides:
 - Delegated workers when available and authorized, with results returned to the coordinator.
 - Serial execution in the current chat when delegation is unavailable.
 
-On startup in a repository, the coordinator creates `.coordinator/` with project context, memory, thread records and shared files, and adds `.coordinator/` to the root `.gitignore`. The included initializer preserves existing state and verifies that git ignores it; equivalent file-tool setup is available when command execution is unavailable. All worktrees share the same recorded project home.
+On startup in a repository, the coordinator uses the harness's file tools or available shell to create `.coordinator/` with project context, memory, thread records and shared files. It preserves existing state, adds `.coordinator/` to the root `.gitignore` and verifies that git ignores it when git execution is available. All worktrees share the same recorded project home. No extra language runtime is required.
 
 A different storage location is an explicit exception for a chosen destination or an environment that cannot retain repo-local files. If durable storage, background execution or scheduling is unavailable, the coordinator says so and leaves a handoff instead of promising unattended work.
 

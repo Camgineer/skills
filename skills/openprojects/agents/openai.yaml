@@ -1,0 +1,5 @@
+interface:
+  display_name: "OpenProjects"
+  short_description: "Turn this chat into the coordinator for a project"
+policy:
+  allow_implicit_invocation: false

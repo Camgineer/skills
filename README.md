@@ -5,6 +5,7 @@ Agent skills by Camgineer. Each folder under `skills/` is one installable skill.
 | Skill | What it does |
 |---|---|
 | [coordinator](skills/coordinator/SKILL.md) | Acts as a project's chief of staff: triages requests, coordinates focused work, preserves context and follows results through delivery. Invoke it explicitly. |
+| [simple-as-prose](skills/simple-as-prose/SKILL.md) | Writes and revises human-facing prose so the reader gets the point and knows what to do next. Install independently. |
 
 ## Coordinator
 

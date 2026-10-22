@@ -1,4 +1,4 @@
-import { readdir } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { validateDefinition } from './command.ts';
@@ -14,7 +14,9 @@ export async function commandPaths(root: string): Promise<string[]> {
     const hasRun = entries.some(entry => entry.isFile() && entry.name === 'run.ts');
     const hasDefinition = entries.some(entry => entry.isFile() && entry.name === 'command.ts');
     if (hasRun || hasDefinition) {
-      if (!relative || relative === 'check-commands' || !relative.split('/').every(segment => segmentName.test(segment) && segment !== 'wizard')) {
+      const validPath = relative !== '' && relative !== 'check-commands'
+        && relative.split('/').every(segment => segmentName.test(segment) && segment !== 'wizard');
+      if (!validPath) {
         throw new Error('Command paths need lowercase kebab-case segments; wizard and the root check-commands target are reserved.');
       }
       if (!hasRun || !hasDefinition) throw new Error(`scripts/${relative} needs both command.ts and run.ts.`);
@@ -42,6 +44,28 @@ export async function discoverCommands(root: string): Promise<DiscoveredCommand[
       commands.push({ path, definition: module.definition });
     } catch (error) {
       throw new Error(`${path}: ${error instanceof Error ? error.message : 'cannot load definition'}`, { cause: error });
+    }
+  }
+  return commands;
+}
+
+export async function checkCommands(root: string): Promise<DiscoveredCommand[]> {
+  const commands = await discoverCommands(root);
+  if (commands.length === 0) throw new Error('No commands found under scripts/.');
+  for (const command of commands) {
+    const skillName = command.path.replaceAll('/', '-');
+    const skillFile = `.agents/skills/${skillName}/SKILL.md`;
+    let source: string;
+    try {
+      source = await readFile(join(root, skillFile), 'utf8');
+    } catch (error) {
+      throw new Error(`${command.path}: add its command skill at ${skillFile}.`, { cause: error });
+    }
+    const frontmatter = source.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/)?.[1];
+    const expectedName = new RegExp(`^name: *(?:${skillName}|"${skillName}"|'${skillName}') *$`, 'm');
+    const validSkillName = frontmatter !== undefined && expectedName.test(frontmatter);
+    if (!validSkillName) {
+      throw new Error(`${command.path}: ${skillFile} must declare name: ${skillName}.`);
     }
   }
   return commands;

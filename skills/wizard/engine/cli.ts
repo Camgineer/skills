@@ -1,5 +1,5 @@
 import { resolve } from 'node:path';
-import { commandPaths, discoverCommands } from './discovery.ts';
+import { checkCommands, commandPaths } from './discovery.ts';
 import { safeOutput } from './command.ts';
 
 try {
@@ -10,8 +10,7 @@ try {
   if (action === 'list-commands') {
     process.stdout.write((await commandPaths(root)).join(' '));
   } else if (action === 'check-commands') {
-    const commands = await discoverCommands(root);
-    if (commands.length === 0) throw new Error('No commands found under scripts/.');
+    const commands = await checkCommands(root);
     console.log(`Checked ${commands.length} command declarations.`);
   } else if (action === 'wizard') {
     const { wizard } = await import('./wizard.ts');

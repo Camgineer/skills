@@ -32,10 +32,10 @@ COMMANDS := $(shell node $(WIZARD_ENGINE)/cli.ts list-commands)
 .PHONY: wizard check-commands $(COMMANDS)
 
 wizard:
-	@node $(WIZARD_ENGINE)/cli.ts wizard || test $$? -eq 130
+	@node $(WIZARD_ENGINE)/cli.ts wizard
 
 %/wizard:
-	@node $(WIZARD_ENGINE)/cli.ts wizard $* || test $$? -eq 130
+	@node $(WIZARD_ENGINE)/cli.ts wizard $*
 
 $(COMMANDS): %: scripts/%/run.ts
 	@node $<
@@ -96,7 +96,7 @@ Each input declares `name`, `prompt`, `help`, `required`, `secret`, and `kind`. 
 | `confirm` | Boolean | `default: false` |
 | `number` | Finite number | `default: 1` |
 
-`choice` requires nonempty, unique options. Defaults must match the kind and allowed choices. Omitted optional inputs yield `''`; choose a default when the command needs a typed value. A required input can have a default. Keep real credentials out of declarations and defaults. `secret: true` uses hidden entry for every kind; its help must explain the expected format or choice values.
+`choice` requires nonempty, unique options. Defaults must match the kind and allowed choices. Omitted optional inputs use their default when declared, otherwise `''`. An explicit Skip on an optional choice yields `''` even when it has a default. A required input can have a default. Keep real credentials out of declarations and defaults. `secret: true` uses hidden entry for every kind; its help must explain the expected format or choice values.
 
 Add business validation inside `run`, such as integer bounds or read-only query restrictions. Raw targets and wizards share that validation. An input's `required` flag checks presence; `false` remains a valid confirmation input.
 
@@ -107,27 +107,25 @@ stages: [{ name: 'Review the resource', help: 'Finish work that needs the select
 irreversible: 'This permanently removes the selected resource.',
 ```
 
-Stages describe work only a human can do, and pause for explicit completion. Raw operators and agents complete these prerequisites themselves. Split a process into commands when human work must occur between automated operations. State changes after execution begins may survive cancellation.
+Stages describe work only a human can do, and pause for explicit completion. Raw operators and agents complete these prerequisites themselves. Split a process into commands when human work must occur between automated operations. Consult the [terminal reference](README.md#terminal-behavior) for interruption behavior.
 
 ## Name and wire the command skill
 
-Name each command's skill after its script path in kebab-case. For example, `scripts/db/read` maps to `make db/read` and skill `db-read`. `scripts/check-names` maps to `make check-names` and skill `check-names`. The checker rejects path pairs that flatten to the same skill name.
+Name each command's skill after its script path in kebab-case. For example, `scripts/db/read` maps to `make db/read` and skill `db-read`. `scripts/check-names` maps to `make check-names` and skill `check-names`. The checker rejects path pairs that flatten to the same skill name and verifies that each command has a skill with that name in its frontmatter.
 
 Create `.agents/skills/<kebab-path>/SKILL.md`. Its description names the operation and when an agent should use it. Its body tells the agent to read the command declaration for inputs and consequences, complete human prerequisites, and call the raw Make target with named variables. Link the declaration relative to the skill. Include a concrete raw invocation and its success condition. Keep command behavior and input reference in the declaration.
 
-Use `make db/read SQL='SELECT 1'`. Named variables preserve `=` inside values. Shell quoting protects shell metacharacters; Make also expands `$`, so a literal dollar needs `$$` inside a single-quoted assignment. The wizard handles both quoting layers. Wizard secrets travel through the environment, and the closing command masks their values. Replace `[hidden]` before replay; the runner rejects that sentinel.
+Use `make db/read SQL='SELECT 1'`. Named variables preserve `=` inside values. Shell quoting protects shell metacharacters; Make also expands `$`, so a literal dollar needs `$$` inside a single-quoted assignment. The wizard handles both quoting layers. Use the [terminal reference](README.md#terminal-behavior) for secret masking, replay, and cancellation behavior.
 
 ## Preserve the terminal experience
 
-- One focused step per screen, complete labels, quiet keyboard guidance, and help on request. Text and number inputs accept `?` for help; choices expose help as an option. Show only the highlighted menu entry's help.
-- Keep foreground and background under the terminal theme's control. Honor `NO_COLOR` and the terminal settings documented in [README.md](README.md).
-- Hide secrets during entry and in returned results, errors, and the closing raw command. Redaction covers exact secret strings; command code must keep transformed secrets out of output and logs.
-- Confirm irreversible actions immediately before execution. Use a spinner for command progress, then show the result and the raw command last. Preserve failure status. Ctrl-C restores the terminal; the engine returns 130 and the Make wrappers treat cancellation as a clean exit; report that effects may have occurred if execution started.
-- Keep command work noninteractive. The engine closes child stdin, drains both output streams, and retains bounded output. Return concise results; commands that produce large artifacts should return their paths.
+Follow [the terminal behavior and settings](README.md#terminal-behavior) when adding commands. Keep one focused task per screen, full labels, highlighted help, and truthful status. Use the engine's shared prompts and progress renderer so commands retain the same interaction.
+
+Confirm an irreversible consequence immediately before execution. Keep command work noninteractive and return concise results; write large results to artifacts and return their paths. Keep transformed secrets out of logs. Prefer opaque tokens when the operation permits them. When using very short secrets, read the [redaction limits](README.md#terminal-behavior) before exposing the result.
 
 ## Check in CI
 
-`check-commands` validates discovered declarations, paired entry files, input kinds and defaults, reserved names, and command skill name collisions. It imports declarations and never calls `run`. Typechecking remains a separate check.
+`check-commands` validates discovered declarations, paired entry files, input kinds and defaults, reserved names, command skill name collisions, and the presence and frontmatter name of each command skill. It imports declarations and never calls `run`. Typechecking remains a separate check.
 
 ```yaml
 steps:

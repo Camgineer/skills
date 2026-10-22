@@ -16,7 +16,7 @@ make -C example check-commands
 make -C example wizard
 ```
 
-The tests use prebuilt terminal support through a development dependency; no native build toolchain is required. The typecheck uses the pinned TypeScript 7 compiler. Node runs TypeScript directly, with erasable syntax only.
+The tests use the prebuilt `@lydell/node-pty` development dependency; no native build toolchain is required. The typecheck uses the pinned TypeScript 7 compiler. Node runs TypeScript directly, with erasable syntax only.
 
 | Entry | Result |
 |---|---|
@@ -26,13 +26,13 @@ The tests use prebuilt terminal support through a development dependency; no nat
 | `make -C example workspace/cache/wizard` | Open a nested namespace. |
 | `make -C example workspace/cache/clear/wizard` | Complete a human prerequisite and confirm the irreversible action. |
 
-The nested command removes only the example's `.cache/greeting.txt`. Its raw target requires `CONFIRM=true`. Both commands have agent skills under [the example skill directory](example/.agents/skills).
+The nested command removes only the example's `.cache/greeting.txt`. Its raw target requires `CONFIRM=true`. The example maps `#wizard` to the same installed engine path used by consuming repositories; its engine directory is a symlink to the shared implementation. Both commands have agent skills under [the example skill directory](example/.agents/skills).
 
 ## Terminal behavior
 
 The flow uses the terminal's font, foreground, and background. A muted magenta accent identifies the current step; green identifies completion, and yellow identifies a warning. Labels and status words carry the same meaning without color. The highlighted menu entry exposes its help. Lists scroll, full labels wrap, and each input occupies its own screen. The closing raw command uses natural terminal wrapping so copying preserves its exact text. GNU Make can append its own error footer when a command fails.
 
-Text and number fields accept `?` for help. Choice fields have a help option. Secrets always use hidden entry. The engine masks their exact values in returned output and the closing command. The masked command is a template; replace `[hidden]` before replay. Encoded or transformed secrets remain the command author's responsibility.
+Text and number fields accept `?` for help. Choice fields have a help option. Secrets always use hidden entry. The engine masks exact secret strings in returned output. Very short secrets can mask parts of ordinary words in results. The closing command masks only populated secret arguments; public input values stay exact, and blank optional secrets are omitted. The masked command is a template; replace `[hidden]` before replay. Omitted inputs on raw replay use the current environment and declared defaults. Encoded or transformed secrets remain the command author's responsibility.
 
 | Setting | Effect |
 |---|---|
@@ -43,7 +43,7 @@ Text and number fields accept `?` for help. Choice fields have a help option. Se
 
 Without a theme override, accents use the terminal's own palette. No background color is forced. Menus and input edits respond immediately. The spinner is the only continuous motion and stops on success, failure, or cancel. The child runs with closed stdin; commands return results instead of asking additional questions.
 
-Ctrl-C restores the terminal. The engine exits with 130; the Make wrappers handle that status as a clean cancellation. Cancellation before execution leaves the command unrun. Interruption during execution stops its process group on POSIX; effects already applied may remain. Windows cancellation stops the direct child and has weaker descendant guarantees. The engine retains up to 1 MiB of output and marks omitted output. Large results belong in command-created artifacts.
+Ctrl-C restores the terminal. The engine exits with 130. GNU Make reports a nonzero status and its error footer, so `make x/wizard && next` stops after cancellation. Cancellation before execution leaves the command unrun. Interruption during execution stops its process group on POSIX; effects already applied may remain. Windows cancellation stops the direct child and has weaker descendant guarantees. The engine retains up to 1 MiB of output and marks omitted output. Large results belong in command-created artifacts.
 
 ## Evidence
 

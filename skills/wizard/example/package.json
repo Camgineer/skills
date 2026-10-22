@@ -6,6 +6,6 @@
     "node": ">=24"
   },
   "imports": {
-    "#wizard": "./wizard.ts"
+    "#wizard": "./.agents/skills/wizard/engine/command.ts"
   }
 }

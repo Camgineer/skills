@@ -1,6 +1,7 @@
 import { spawn } from 'node:child_process';
 import { StringDecoder } from 'node:string_decoder';
-import { cancelledExitCode, safeOutput, secretInputs, secretMask } from './command.ts';
+import { createRedactor, secretMask } from './redaction.ts';
+import { cancelledExitCode, populatedSecretInputs, safeOutput, secretInputs } from './command.ts';
 import type { InputValue } from './command.ts';
 import type { DiscoveredCommand } from './discovery.ts';
 
@@ -20,14 +21,10 @@ function assignments(inputs: Readonly<Record<string, InputValue>>): string[] {
 export function rawCommand(command: DiscoveredCommand, inputs: Readonly<Record<string, InputValue>>): string {
   const publicInputs = { ...inputs };
   const secretPrefix: string[] = [];
-  for (const input of secretInputs(command.definition)) {
+  for (const input of populatedSecretInputs(command.definition, inputs)) {
     secretPrefix.push(`${input.name}=${quote(secretMask)}`);
-    delete publicInputs[input.name];
   }
-  const secrets = secretInputs(command.definition).map(input => String(inputs[input.name]));
-  for (const [name, value] of Object.entries(publicInputs)) {
-    publicInputs[name] = safeOutput(String(value), secrets);
-  }
+  for (const input of secretInputs(command.definition)) delete publicInputs[input.name];
   return [...secretPrefix, 'make', command.path, ...assignments(publicInputs).map(quote)].join(' ');
 }
 
@@ -61,11 +58,11 @@ export async function executeCommand(
   let truncated = false;
   let timer: NodeJS.Timeout | undefined;
   let interruption: Promise<void> | undefined;
-  const sendGroupSignal = (signal: NodeJS.Signals) => {
+  const sendGroupSignal = (processSignal: NodeJS.Signals) => {
     if (!child.pid) return;
     try {
-      if (process.platform === 'win32') child.kill(signal);
-      else process.kill(-child.pid, signal);
+      if (process.platform === 'win32') child.kill(processSignal);
+      else process.kill(-child.pid, processSignal);
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== 'ESRCH') throw error;
     }
@@ -90,34 +87,9 @@ export async function executeCommand(
   };
   function redactedStream(stream: NodeJS.ReadableStream) {
     const decoder = new StringDecoder('utf8');
-    const guard = Math.max(0, ...secrets.map(secret => secret.length - 1));
-    const nonemptySecrets = secrets.filter(Boolean).sort((a, b) => b.length - a.length);
-    let pending = '';
-    function flush({ final }: { final: boolean }) {
-      const end = final ? pending.length : Math.max(0, pending.length - guard);
-      let cursor = 0;
-      let redacted = '';
-      while (cursor < end) {
-        const secret = nonemptySecrets.find(secret => pending.startsWith(secret, cursor));
-        if (secret) {
-          redacted += secretMask;
-          cursor += secret.length;
-        } else {
-          redacted += pending[cursor];
-          cursor++;
-        }
-      }
-      pending = pending.slice(cursor);
-      capture(redacted);
-    }
-    stream.on('data', (chunk: Buffer) => {
-      pending += decoder.write(chunk);
-      flush({ final: false });
-    });
-    stream.on('end', () => {
-      pending += decoder.end();
-      flush({ final: true });
-    });
+    const redactor = createRedactor(secrets);
+    stream.on('data', (chunk: Buffer) => capture(redactor.write(decoder.write(chunk))));
+    stream.on('end', () => capture(redactor.write(decoder.end()) + redactor.finish()));
   }
   redactedStream(child.stdout);
   redactedStream(child.stderr);
@@ -132,8 +104,8 @@ export async function executeCommand(
       ));
     });
     await interruption;
-    let output = safeOutput(Buffer.concat(chunks).toString('utf8'), secrets).trimEnd();
-    if (truncated) output += '\n[Output exceeded 1 MiB. Remaining output omitted.]';
+    let output = safeOutput(Buffer.concat(chunks).toString('utf8')).trimEnd();
+    if (truncated) output += `\n[Output exceeded ${outputLimitBytes.toLocaleString('en-US')} bytes. Remaining output omitted.]`;
     return { code, output };
   } finally {
     signal.removeEventListener('abort', interrupt);

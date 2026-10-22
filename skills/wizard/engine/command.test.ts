@@ -2,10 +2,10 @@ import { test } from 'node:test';
 import pty from '@lydell/node-pty';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
+import { access, mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
-import { discoverCommands } from './discovery.ts';
+import { checkCommands, discoverCommands } from './discovery.ts';
 import { executeCommand, rawCommand } from './execution.ts';
 
 const skillRoot = fileURLToPath(new URL('../', import.meta.url));
@@ -36,7 +36,7 @@ test('wizard and copyable raw command preserve shell and make metacharacters wit
   const run = await executeCommand(exampleRoot, command, inputs, new AbortController().signal);
   assert.equal(run.code, 0, run.output);
   assert.equal(run.output, `Hello, ${name}!`);
-  const replay = rawCommand(command, inputs).replace("TOKEN='[hidden]' ", '');
+  const replay = rawCommand(command, inputs);
   const raw = spawnSync('/bin/sh', ['-c', replay], { cwd: exampleRoot, encoding: 'utf8' });
   assert.equal(raw.status, 0, raw.stderr);
   assert.equal(raw.stdout.trimEnd(), run.output);
@@ -83,7 +83,7 @@ test('secrets stay hidden in results and replay, and cancellation stops the proc
   assert.equal(run.code, 0, run.output);
   assert.match(run.output, /Private note: \[hidden\]/);
   assert.ok(!rawCommand(command, inputs).includes(inputs.TOKEN));
-  assert.ok(!rawCommand(command, { ...inputs, NAME: inputs.TOKEN }).includes(inputs.TOKEN));
+  assert.match(rawCommand(command, { ...inputs, NAME: inputs.TOKEN }), /'NAME=private-test-value'/);
   const defaultSecret = 'private-default-value';
   const defaultRunner = spawnSync(process.execPath, ['--input-type=module', '-e', `
     import { runCommand } from ${JSON.stringify(engine)};
@@ -164,7 +164,7 @@ test('Ctrl-C during the visible spinner stops resistant descendants and prints t
   try {
     await mkdir(join(root, 'scripts', 'wait'), { recursive: true });
     await writeFile(join(root, 'package.json'), '{"type":"module"}');
-    await writeFile(join(root, 'Makefile'), `wizard:\n\t@node ${JSON.stringify(cli)} wizard wait --root . || test $$? -eq 130\nwait:\n\t@node scripts/wait/run.ts\n`);
+    await writeFile(join(root, 'Makefile'), `wizard:\n\t@node ${JSON.stringify(cli)} wizard wait --root .\nwait:\n\t@node scripts/wait/run.ts\nnext:\n\t@touch next-ran\n`);
     await writeFile(join(root, 'scripts', 'wait', 'command.ts'), `
       import { spawn } from 'node:child_process';
       import { writeFile } from 'node:fs/promises';
@@ -177,7 +177,7 @@ test('Ctrl-C during the visible spinner stops resistant descendants and prints t
       } };
     `);
     await writeFile(join(root, 'scripts', 'wait', 'run.ts'), `import { runCommand } from ${JSON.stringify(engine)}; import { definition } from './command.ts'; await runCommand(definition);`);
-    terminal = pty.spawn('make', ['--no-print-directory', 'wizard'], {
+    terminal = pty.spawn('/bin/sh', ['-c', 'make --no-print-directory wizard && make --no-print-directory next'], {
       cwd: root,
       name: 'xterm-256color',
       cols: 44,
@@ -201,9 +201,12 @@ test('Ctrl-C during the visible spinner stops resistant descendants and prints t
     const exitCode = await Promise.race([exited, new Promise<never>((_resolve, reject) => {
       timeout = setTimeout(() => reject(new Error(`Cancellation did not finish: ${transcript}`)), 10000);
     })]).finally(() => clearTimeout(timeout));
-    assert.equal(exitCode, 0, transcript);
+    assert.equal(exitCode, 2, transcript);
+    await assert.rejects(access(join(root, 'next-ran')), { code: 'ENOENT' });
     assert.match(transcript, /Interrupted/);
-    assert.equal(transcript.trimEnd().split('\n').at(-1)?.trim(), 'make wait');
+    assert.match(transcript, /make wait/);
+    assert.match(transcript, /Error 130/);
+    assert.equal(transcript.match(/└ /g)?.length, 1, transcript);
     const status = spawnSync('ps', ['-p', String(childPid), '-o', 'stat='], { encoding: 'utf8' });
     assert.ok(status.status !== 0 || /^[ZX]/.test(status.stdout.trim()), status.stdout);
   } finally {
@@ -212,6 +215,97 @@ test('Ctrl-C during the visible spinner stops resistant descendants and prints t
       try { process.kill(childPid, 'SIGKILL'); }
       catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ESRCH') throw error; }
     }
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('blank secrets replay without edits and short secrets preserve every public argument', async () => {
+  const command = (await discoverCommands(exampleRoot)).find(command => command.path === 'greet')!;
+  const inputs = { NAME: 'Samantha', COUNT: 1, TONE: 'friendly', LOUD: false, TOKEN: '' };
+  const replay = rawCommand(command, inputs);
+  assert.ok(!replay.includes('TOKEN'));
+  assert.ok(!replay.includes('[hidden]'));
+  const raw = spawnSync('/bin/sh', ['-c', replay], { cwd: exampleRoot, encoding: 'utf8', env: { ...process.env, TOKEN: '' } });
+  assert.equal(raw.status, 0, raw.stderr);
+  assert.equal(raw.stdout, 'Hello, Samantha!\n');
+  const publicMarker = make('greet', 'NAME=Samantha[hidden]');
+  assert.equal(publicMarker.status, 0, publicMarker.stderr);
+  assert.equal(publicMarker.stdout, 'Hello, Samantha[hidden]!\n');
+  for (const secret of ['a', '1', 'true']) {
+    assert.equal(rawCommand(command, { ...inputs, TOKEN: secret }),
+      "TOKEN='[hidden]' make greet 'NAME=Samantha' 'COUNT=1' 'TONE=friendly' 'LOUD=false'");
+  }
+});
+
+test('CI rejects a missing or misnamed command skill and Make control input names', async () => {
+  const root = await mkdtemp(join(skillRoot, '.test-'));
+  try {
+    const folder = join(root, 'scripts', 'report', 'show');
+    await mkdir(folder, { recursive: true });
+    await writeFile(join(folder, 'run.ts'), '');
+    await writeFile(join(folder, 'command.ts'), "export const definition = { name: 'Report', help: 'Report.', inputs: [], run: () => 'ok' };");
+    await assert.rejects(checkCommands(root), /add its command skill at .agents\/skills\/report-show\/SKILL.md/);
+    const skill = join(root, '.agents', 'skills', 'report-show');
+    await mkdir(skill, { recursive: true });
+    await writeFile(join(skill, 'SKILL.md'), '---\nname: wrong\n---\n');
+    await assert.rejects(checkCommands(root), /must declare name: report-show/);
+    await writeFile(join(skill, 'SKILL.md'), '---\nname: report-show\n---\n');
+    assert.equal((await checkCommands(root)).length, 1);
+    for (const name of ['VPATH', 'GNUMAKEFLAGS', 'MAKESHELL', 'SUFFIXES', 'GPATH', 'MAKEFILE_LIST']) {
+      const path = join(root, 'scripts', name.toLowerCase().replaceAll('_', '-'));
+      await mkdir(path, { recursive: true });
+      await writeFile(join(path, 'run.ts'), '');
+      await writeFile(join(path, 'command.ts'), `export const definition = { name: 'Unsafe', help: 'Unsafe.', inputs: [{ name: '${name}', prompt: 'Input?', help: 'Input.', required: true, secret: false, kind: 'text' }], run: () => 'ok' };`);
+      await assert.rejects(discoverCommands(root), /safe uppercase name/);
+      await rm(path, { recursive: true });
+    }
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('Skip bypasses an optional choice default and navigation guidance stays framed at 28 columns', { skip: process.platform === 'win32' }, async () => {
+  const { setTimeout: delay } = await import('node:timers/promises');
+  const { stripVTControlCharacters } = await import('node:util');
+  const root = await mkdtemp(join(skillRoot, '.test-'));
+  const cli = fileURLToPath(new URL('./cli.ts', import.meta.url));
+  let terminal: ReturnType<typeof pty.spawn> | undefined;
+  try {
+    const folder = join(root, 'scripts', 'choose');
+    await mkdir(folder, { recursive: true });
+    await writeFile(join(root, 'package.json'), '{"type":"module"}');
+    await writeFile(join(root, 'Makefile'), '.EXPORT_ALL_VARIABLES:\nchoose:\n\t@node scripts/choose/run.ts\n');
+    await writeFile(join(folder, 'command.ts'), `export const definition = {
+      name: 'Choose', help: 'Choose.', inputs: [{ name: 'MODE', prompt: 'Choose a mode', help: 'Choose a mode.', required: false, secret: false, kind: 'choice', default: 'one', options: [{ value: 'one', label: 'One' }] }],
+      run: inputs => 'mode=' + (inputs.MODE || 'blank'),
+    };`);
+    await writeFile(join(folder, 'run.ts'), `import { runCommand } from ${JSON.stringify(engine)}; import { definition } from './command.ts'; await runCommand(definition);`);
+    terminal = pty.spawn(process.execPath, [cli, 'wizard', 'choose', '--root', root], {
+      cwd: root, name: 'xterm-256color', cols: 28, rows: 28,
+      env: { ...process.env, NO_COLOR: '', FORCE_COLOR: '1', WIZARD_THEME: 'dark', ACCESSIBLE: '1' },
+    });
+    let transcript = '';
+    terminal.onData(chunk => { transcript += chunk; });
+    const exited = new Promise<number>(resolve => terminal!.onExit(event => resolve(event.exitCode)));
+    const deadline = Date.now() + 10000;
+    while (!transcript.includes('Skip')) {
+      if (Date.now() > deadline) throw new Error(`Choice did not render: ${transcript}`);
+      await delay(25);
+    }
+    const hint = stripVTControlCharacters(transcript).split(/\r?\n/).find(line => line.includes('↑↓ / Enter'));
+    assert.ok(hint, transcript);
+    assert.ok(hint.startsWith('│'), transcript);
+    assert.ok(hint.length <= 28, hint);
+    terminal.write('\x1b[B\r');
+    let timeout: NodeJS.Timeout | undefined;
+    const exitCode = await Promise.race([exited, new Promise<never>((_resolve, reject) => {
+      timeout = setTimeout(() => reject(new Error(`Choice did not finish: ${transcript}`)), 10000);
+    })]).finally(() => clearTimeout(timeout));
+    assert.equal(exitCode, 0, transcript);
+    assert.match(transcript, /mode=blank/);
+    assert.match(transcript, /'MODE='/);
+  } finally {
+    terminal?.kill('SIGKILL');
     await rm(root, { recursive: true, force: true });
   }
 });

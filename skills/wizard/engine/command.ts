@@ -1,4 +1,5 @@
 import { stripVTControlCharacters } from 'node:util';
+import { createRedactor, secretMask } from './redaction.ts';
 
 export type InputValue = string | number | boolean;
 type InputBase = {
@@ -23,7 +24,6 @@ export type Command = {
   run: (inputs: Readonly<Record<string, InputValue>>, context: { root: string }) => string | Promise<string>;
 };
 
-export const secretMask = '[hidden]';
 export const cancelledExitCode = 130;
 const terminalControlCharacters = /[\x00-\x08\x0b-\x1f\x7f]/g;
 
@@ -31,11 +31,18 @@ export function secretInputs(definition: Command): readonly Input[] {
   return definition.inputs.filter(input => input.secret);
 }
 
+export function populatedSecretInputs(definition: Command, inputs: Readonly<Record<string, InputValue>>): readonly Input[] {
+  return secretInputs(definition).filter(input => inputs[input.name] !== undefined && String(inputs[input.name]) !== '');
+}
+
 const variableName = /^[A-Z][A-Z0-9_]*$/;
 const reservedNames = new Set([
   'CONFIRM', 'PATH', 'SHELL', 'HOME', 'PWD', 'USER', 'LOGNAME', 'MAKE', 'MAKEFLAGS', 'MFLAGS',
-  'MAKEFILES', 'MAKELEVEL', 'MAKEOVERRIDES', 'NODE_OPTIONS', 'NODE_PATH',
-  'LD_PRELOAD', 'DYLD_INSERT_LIBRARIES', 'WIZARD_ENGINE', 'COMMANDS',
+  'MAKEFILES', 'MAKEFILE_LIST', 'MAKELEVEL', 'MAKEOVERRIDES', 'GNUMAKEFLAGS', 'MAKESHELL', 'VPATH',
+  'SUFFIXES', 'GPATH', 'CURDIR', 'MAKECMDGOALS', 'MAKE_HOST', 'MAKE_VERSION',
+  'MAKE_RESTARTS', 'MAKE_TERMOUT', 'MAKE_TERMERR', 'NODE_OPTIONS', 'NODE_PATH',
+  'LD_PRELOAD', 'LD_LIBRARY_PATH', 'DYLD_INSERT_LIBRARIES', 'DYLD_LIBRARY_PATH', 'BASH_ENV', 'ENV', 'IFS',
+  'WIZARD_ENGINE', 'COMMANDS',
 ]);
 const kinds = new Set(['text', 'number', 'confirm', 'choice']);
 
@@ -94,7 +101,9 @@ export function validateDefinition(candidate: unknown): asserts candidate is Com
 }
 
 export function parseInput(input: Input, raw: string | undefined): InputValue {
-  if (raw?.includes(secretMask)) throw new Error(`${input.name}: replace the masked secret before running.`);
+  if (input.secret && raw === secretMask) throw new Error(`${input.name}: replace the masked secret before running.`);
+  const skippedChoice = input.kind === 'choice' && !input.required && raw === '';
+  if (skippedChoice) return '';
   const missing = raw === undefined || raw === '';
   if (missing && input.default !== undefined) return input.default;
   if (missing && input.required) throw new Error(`${input.name} is required. ${input.help}`);
@@ -119,9 +128,8 @@ export function parseInput(input: Input, raw: string | undefined): InputValue {
 }
 
 export function safeOutput(message: string, secrets: readonly string[] = []): string {
-  let safe = message;
-  const longestFirst = [...secrets].filter(Boolean).sort((a, b) => b.length - a.length);
-  for (const secret of longestFirst) safe = safe.split(secret).join(secretMask);
+  const redactor = createRedactor(secrets);
+  const safe = redactor.write(message) + redactor.finish();
   return stripVTControlCharacters(safe).replace(terminalControlCharacters, '');
 }
 

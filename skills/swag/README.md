@@ -2,7 +2,7 @@
 
 Swag shapes look and feel across web pages, terminal UIs and CLI output, diagrams, documents and Markdown, slides, emails, generated images, and charts. It also applies its principles to other surfaces with the relevant platform guidance. Agents can reach for it on look-and-feel work, and it can be invoked directly with `/swag`.
 
-Swag owns the form. Every word it writes or revises uses simple-as-prose. Agent-facing text also uses writing-for-agents. These writing companions own the words across every surface.
+Swag owns the form. Human-facing words use simple-as-prose, and agent-facing text uses writing-for-agents. The writing companions own the words across every surface.
 
 It keeps an existing palette and the host's theme unless color is open for exploration. When choosing a palette, swag uses the one named in the request or picks a soft palette, names it, and offers alternatives without waiting. Established and custom palettes are welcome when they fit the brief and preserve contrast and meaning.
 
@@ -12,7 +12,7 @@ Web work follows frontend-design, impeccable, animate, then web-design-guideline
 
 ## Install
 
-Every route that writes or revises text requires `simple-as-prose`. Agent-facing text also requires `writing-for-agents`. The web route adds these separately installed companions, which retain their own licenses:
+Routes that write or revise human-facing words require `simple-as-prose`. Routes that write or revise agent-facing text require `writing-for-agents`. The web route adds these separately installed companions, which retain their own licenses:
 
 - `frontend-design`
 - `impeccable`

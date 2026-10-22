@@ -1,17 +1,19 @@
 ---
 name: swag
-description: "One design workflow for aesthetic direction, palette suggestions, critique and polish, expressive motion, and web accessibility. Use /swag with a page, component, or brief. Requires four installed companion skills."
+description: "One web design workflow for aesthetic direction, palette suggestions, critique and polish, expressive motion, and accessibility. Use /swag with a web page, component, or brief. Requires four installed companion skills."
 disable-model-invocation: true
 license: Apache-2.0
 ---
 
 # Swag
 
-Turn a brief or existing interface into a finished design through four installed skills. Read each skill's instructions when entering its stage. This file owns their order and handoffs; the companion skills own their methods.
+Turn a brief or existing web interface into a finished design through four installed skills. Read each skill's instructions when entering its stage. This file owns their order and handoffs; the companion skills own their methods.
 
 ## Establish the target
 
 Resolve the requested page, component, or brief from the request and project context. Read the relevant source, existing design guidance, assets, and constraints. For an existing page, inspect its render and capture a before screenshot when browser tools are available. Preserve factual content and working behavior. Ask only when a missing choice changes the work and cannot be resolved from context.
+
+Swag targets web interfaces. For a native-only target, report that it is outside this workflow's scope and stop before edits.
 
 Treat a request to polish as refinement within the existing identity. Replace the visual direction only when the request authorizes redesign. For a review-only request, assess each stage without editing source; return findings and recommendations.
 
@@ -31,7 +33,7 @@ Keep a coherent existing palette unless the request opens color for exploration.
 
 Read the installed `impeccable` skill and run its setup from the target project, using that installation's base directory. Pass a concrete task to its critique and polish playbooks so it enters the work rather than its no-argument menu. Load the playbooks and quality guidance they require.
 
-Use the stage-one brief as the visual authority. Critique the target, fix issues within scope, and implement or refine the design with impeccable's guidance. For new work or redesign, follow its applicable new-work route before polishing. Keep the requested page as the deliverable; documentation, hooks, and unrelated project repairs require their own task scope.
+Use the stage-one brief as the chosen direction. Critique the target, fix issues within scope, and implement or refine the design with impeccable's guidance. For new work or redesign, use its layout and build guidance within that direction. Skip its direction selection, repeated confirmation, and DESIGN.md replacement unless the request explicitly asks for them. Keep the requested page as the deliverable; documentation, hooks, and unrelated project repairs require their own task scope.
 
 Complete this stage when the primary task works, the design matches the brief, and the critique's in-scope issues are fixed or recorded with a concrete reason. Pass any interaction that could benefit from motion to stage three.
 
@@ -39,23 +41,24 @@ Complete this stage when the primary task works, the design matches the brief, a
 
 Read the installed `animate` skill. Supply the concrete interactions, their purpose, expected use frequency, and swag's motion direction as its task; its greeting-only path applies to an invocation without a task.
 
-Give visible state changes presence. Entrances, exits, hover, press, selection, and feedback should ease between states rather than snap. Use the animator's toolkit deliberately: anticipation, acceleration and deceleration, follow-through, and small squash or stretch where the material and interaction support it. Make one coherent motion language; a reading surface can feel composed while an expressive page can feel physical.
+Give visible state changes presence. Entrances, exits, selection, and feedback should ease between states rather than snap. Use the animator's toolkit deliberately: anticipation, acceleration and deceleration, follow-through, and small squash or stretch where the material and interaction support it. Make one coherent motion language; a reading surface can feel composed while an expressive page can feel physical.
 
-Use animate's implementation sequence, existing project tokens, and the simplest suitable tool. In swag, its frequency gate scales amplitude and duration rather than removing feedback. This motion direction overrides animate's blanket veto on keyboard-triggered and frequent actions. Keep task completion and focus timely; motion accompanies the state change and never delays activation. Static content needs no continuous animation. Real-time progress and direct manipulation must stay faithful to the input rather than acquire artificial lag.
+Static content needs no continuous animation. Real-time progress and direct manipulation must stay faithful to the input rather than acquire artificial lag.
 
-Use animate's sourced curves, timing, interruption, and pointer guidance. For gesture weight, preserve velocity through reversal; for a press, a small compress-and-settle can carry the response. Keep text readable during deformation. Respect reduced-motion settings with gentler fades or another accessible treatment. Preserve an immediate, usable focus indicator even when its surrounding treatment eases. Inspect rapid repeated input, keyboard use, entry and exit, and the reduced-motion treatment. Finish with the motion decisions and implemented parameters.
+Follow animate for implementation choices and safeguards. Inspect rapid repeated input, keyboard use, entry and exit, and the reduced-motion treatment. Finish with the motion decisions and implemented parameters.
 
 ### 4. Web-design-guidelines owns the final web review
 
-Read the installed `web-design-guidelines` skill and fetch its current guidelines as instructed. Give it the exact changed files and review them against every applicable rule. Fix in-scope findings, then recheck affected behavior and capture the after screenshot at the same viewport and state as before.
+Read the installed `web-design-guidelines` skill and fetch its current guidelines as instructed. In edit mode, give it the exact changed target files. In review-only mode, give it the target files under review. Review that file set against every applicable rule. In edit mode, fix in-scope findings, then recheck affected behavior and capture the after screenshot at the same viewport and state as before. In review-only mode, report findings without changing source.
 
-If the guidelines cannot be fetched, report that this stage is incomplete. Use available local guidance for useful checks, with its age or source identified; never label that fallback a current-guidelines pass. For a native-only target, report this web review as not applicable and use impeccable's native verification instead.
+If the guidelines cannot be fetched, report that this stage is incomplete. Use available local guidance for useful checks, with its age or source identified; never label that fallback a current-guidelines pass.
 
 ## Resolve overlaps
 
 - The request, accessibility needs, functional correctness, and project constraints bound every stage. When a pinned visual choice creates an access barrier, preserve its intent with an accessible treatment and explain the tradeoff.
 - Frontend-design selects the visual direction. Impeccable improves its execution and may expose a mismatch with the brief; revise the brief explicitly before changing direction.
-- Swag sets the motion direction above; animate owns its implementation. Route motion suggestions from impeccable through animate instead of running two animation implementations. Its default preference for stillness yields to swag's eased feedback; its accessibility and interruption safeguards remain binding.
+- Apply eased transitions to controls' interactive state changes, including hover, focus, and press. Keep decorative hover effects off ordinary cards. Frontend-design governs the single orchestrated entrance or ambient moment.
+- Swag's motion direction overrides animate's veto on keyboard-triggered and frequent actions. Scale amplitude and duration to use frequency while keeping activation and focus timely. Animate owns implementation and safeguards; route impeccable's motion suggestions through it.
 - Web-design-guidelines checks web behavior and access. Its review does not select a replacement aesthetic. Fix a finding in the owning stage, then rerun the affected downstream checks.
 - Keep the brief's and project's copy conventions when a guideline's style preference conflicts with them. Record the intentional exception; accessibility and behavior findings still need a fix.
 - Carry existing authorization through the workflow. Companion greetings, menus, and optional follow-up questions do not restart a settled brief. Preserve host restrictions on delegation; when independent critique assessments are prohibited, run them sequentially and disclose the reduced independence. Report unavailable tools and skipped checks as limits of the result.

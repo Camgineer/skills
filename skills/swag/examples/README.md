@@ -1,8 +1,8 @@
 # Sample run
 
-Swag was applied in this session to the [before page](before.html) to produce the [after page](after.html). The page is an illustrative bicycle workshop listing. Its booking link points to an explanatory section and collects no bookings.
+Swag was run once on the [before page](before.html) to produce the [after page](after.html). The page is an illustrative bicycle workshop listing. Its booking link points to an explanatory section and collects no bookings.
 
-The brief keeps the workshop content and booking link, gives the page a workshop identity, and adds easing and weight to its interactions. This is an in-session execution of the skill's instructions, not an independent evaluation of skill discovery. Critique assessments ran sequentially because delegation was prohibited. Their reduced independence limits the review.
+The brief keeps the workshop content and booking link, gives the page a workshop identity, and adds easing and weight to its interactions. The critique ran in a single agent, so its assessments were not independent. Skill discovery was not evaluated.
 
 ## Direction and palette
 

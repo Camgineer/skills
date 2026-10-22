@@ -1,0 +1,5 @@
+{"version":2,"width":80,"height":24,"title":"Raw command: one Ctrl-C stops work that ignores the signal"}
+[0.050666833999999654,"o","Ready. This operation ignores the signal.\r\n"]
+[0.786567959,"o","^C"]
+[0.7878452090000001,"o","Exit code: 130\r\n"]
+[0.7896161249999996,"o","speed 38400 baud; 24 rows; 80 columns;\r\nlflags: icanon isig iexten echo echoe echok echoke -echonl echoctl\r\n\t-echoprt -altwerase -noflsh -tostop -flusho -pendin -nokerninfo\r\n\t-extproc\r\niflags: -istrip icrnl -inlcr -igncr ixon -ixoff ixany imaxbel iutf8\r\n\t-ignbrk brkint -inpck -ignpar -parmrk\r\noflags: opost onlcr -oxtabs -onocr -onlret\r\ncflags: cread cs8 -parenb -parodd hupcl -clocal -cstopb -crtscts -dsrflow\r\n\t-dtrflow -mdmbuf\r\ncchars: discard = ^O; dsusp = ^Y; eof = ^D; eol = <undef>;\r\n\teol2 = <undef>; erase = ^?; intr = ^C; kill = ^U; lnext = ^V;\r\n\tmin = 1; quit = ^\\; reprint = ^R; start = ^Q; status = ^T;\r\n\tstop = ^S; susp = ^Z; time = 0; werase = ^W;\r\n"]

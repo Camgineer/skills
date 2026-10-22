@@ -85,7 +85,7 @@ import { definition } from './command.ts';
 await runCommand(definition);
 ```
 
-`run` receives validated inputs and the repository root, and returns a result string. Perform all command work there. Return output instead of printing it. Run subprocesses with closed stdin and captured output so the wizard owns interaction. Await subprocess completion and keep descendants in the command process group.
+`run` receives validated inputs and a `CommandContext` with `root`, `signal`, and `terminal`, and returns a result string. Perform all command work there. Return output instead of printing it. Run subprocesses with closed stdin and captured output so the wizard owns interaction. Await subprocess completion and keep descendants in the command process group.
 
 Each input declares `name`, `prompt`, `help`, `required`, `secret`, and `kind`. Names are uppercase Make variable names. The checker rejects execution-control names such as `PATH`, `SHELL`, `MAKEFLAGS`, `NODE_OPTIONS`, and `WIZARD_*`. Use a descriptive name such as `ACCOUNT_NAME` rather than an ambient shell name such as `USER`.
 
@@ -107,7 +107,33 @@ stages: [{ name: 'Review the resource', help: 'Finish work that needs the select
 irreversible: 'This permanently removes the selected resource.',
 ```
 
-Stages describe work only a human can do, and pause for explicit completion. Raw operators and agents complete these prerequisites themselves. Split a process into commands when human work must occur between automated operations. Consult the [terminal reference](README.md#terminal-behavior) for interruption behavior.
+Stages describe work only a human can do, and pause for explicit completion. Raw operators and agents complete these prerequisites themselves. Use interactive execution when a command needs typed input between automated operations. Consult the [terminal reference](README.md#terminal-behavior) for interruption behavior.
+
+## Run an interactive command
+
+Set `interactive: true` when command work asks questions or needs cancellable progress. Omission means false; supplied values must be boolean. The wizard completes declaration inputs, human stages, and irreversible confirmation, then calls `run` in process with `wizard: true`. Raw execution calls the same definition without that flag. Existing commands keep their child execution in the wizard and Node's default SIGINT handling in raw execution.
+
+Use only the context's terminal methods for command prompts. They share the engine's prompt instance and cancellation signal. Check `process.stdin.isTTY && process.stdout.isTTY` before asking human questions. Keep piped output machine-readable; progress is silent when stdout is redirected.
+
+```typescript
+async run(inputs, { signal, terminal }) {
+  await requestCode(String(inputs.EMAIL), signal);
+
+  const code = await terminal.password('Enter the code', value => {
+    const missingCode = !value?.trim();
+
+    if (missingCode) return 'Enter the code from your email.';
+  });
+
+  return terminal.withProgress(() => verifyCode(code, signal));
+},
+```
+
+The context exports `CommandContext` and `Terminal` through `#wizard`. Terminal methods include `showStep(title)`, `text(message, validate?)`, `password(message, validate?)`, `confirm(message, { initialValue })`, `info(message)`, and `withProgress(operation)`. Validation returns a message or `undefined`. Passwords remain hidden; validation messages must describe the required format without including the entered secret. A code gathered inside `run` stays out of declaration inputs, replay arguments, environment variables, and logs. Returned results are redacted against declared secret inputs; keep command-collected secrets out of results too.
+
+For commands that opt into interactive execution, pass `signal` to command I/O and honor abort during cleanup. The engine owns cancellation; consumers need no SIGINT listener or abort controller. A transport can combine this signal with a request timeout. The first Ctrl-C aborts it, and a second forces exit 130 if work ignores abort. Throw the exported `Cancelled` for explicit cancellation; its default message is `Cancelled.`. An aborted command cannot report success even if it returns normally.
+
+Wrap only long operations in `terminal.withProgress`. It calls the operation once and removes progress on success, failure, or cancellation. Ask questions outside that operation so progress never competes with a prompt. Use [the sign-in example](example/scripts/sign-in/command.ts) for a complete command.
 
 ## Name and wire the command skill
 
@@ -121,7 +147,7 @@ Use `make db/read SQL='SELECT 1'`. Named variables preserve `=` inside values. S
 
 Follow [the terminal behavior and settings](README.md#terminal-behavior) when adding commands. Keep one focused task per screen, full labels, highlighted help, and truthful status. Use the engine's shared prompts and progress renderer so commands retain the same interaction.
 
-Confirm an irreversible consequence immediately before execution. Keep command work noninteractive and return concise results; write large results to artifacts and return their paths. Keep transformed secrets out of logs. Prefer opaque tokens when the operation permits them. When using very short secrets, read the [redaction limits](README.md#terminal-behavior) before exposing the result.
+Confirm an irreversible consequence immediately before execution. Return concise results; write large results to artifacts and return their paths. Keep transformed secrets out of logs. Prefer opaque tokens when the operation permits them. When using very short secrets, read the [redaction limits](README.md#terminal-behavior) before exposing the result.
 
 ## Check in CI
 

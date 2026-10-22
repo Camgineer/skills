@@ -1,0 +1,5 @@
+interface:
+  display_name: "ERD"
+  short_description: "Draw an interactive diagram of a database or data model."
+policy:
+  allow_implicit_invocation: true

@@ -5,6 +5,7 @@ Agent skills by Camgineer. Each folder under `skills/` is one installable skill.
 | Skill | What it does |
 |---|---|
 | [coordinator](skills/coordinator/SKILL.md) | Acts as a project's chief of staff: triages requests, coordinates focused work, preserves context and follows results through delivery. Invoke it explicitly. |
+| [erd](skills/erd/SKILL.md) | Draws an interactive database diagram as one HTML file, with column-level links and hover highlights. Ask for an ERD. |
 | [simple-as-prose](skills/simple-as-prose/SKILL.md) | Writes and revises human-facing prose so the reader gets the point and knows what to do next. Install independently. |
 | [swag](skills/swag/SKILL.md) | Shapes look and feel across interfaces, terminal output, documents, diagrams, slides, emails, images, and charts. Applies shared principles and routes to the medium's guidance. Web work uses four companion skills. |
 | [wizard](skills/wizard/SKILL.md) | Gives every script a raw Make target, an assisted terminal wizard, and a command skill, with one shared execution path. |
@@ -32,3 +33,7 @@ On startup in a repository, the coordinator uses the harness's file tools or ava
 A different storage location is an explicit exception for a chosen destination or an environment that cannot retain repo-local files. If durable storage, background execution or scheduling is unavailable, the coordinator says so and leaves a handoff instead of promising unattended work.
 
 The skill contains the workflow and its supporting references in one folder. It requires no particular vendor, private API or companion service. It cannot add conversation UI, persistent execution, shared storage or permissions to a host that lacks them. Optional host-specific metadata does not change that contract.
+
+## ERD
+
+![Bookshop diagram with relationship tracing and allowed values](.github/images/erd-example.gif)

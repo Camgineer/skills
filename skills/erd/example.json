@@ -1,0 +1,56 @@
+{
+  "title": "Bookshop database",
+  "subtitle": "Books, purchases and gift options",
+  "tables": [
+    {
+      "id": "authors",
+      "group": "Catalogue",
+      "caption": "People who write books",
+      "columns": [
+        { "name": "id", "type": "bigint", "pk": true },
+        { "name": "slug", "type": "varchar(80)", "unique": true },
+        { "name": "name", "type": "varchar(200)" }
+      ]
+    },
+    {
+      "id": "books",
+      "group": "Catalogue",
+      "caption": "Titles available in the shop",
+      "columns": [
+        { "name": "id", "type": "bigint", "pk": true },
+        { "name": "author_id", "type": "bigint", "fk": true },
+        { "name": "title", "type": "varchar(300)" },
+        { "name": "format", "type": "enum('paperback','hardcover','ebook')" },
+        { "name": "price", "type": "decimal(10,2)" }
+      ]
+    },
+    {
+      "id": "orders",
+      "group": "Sales",
+      "caption": "Customer purchases",
+      "columns": [
+        { "name": "id", "type": "bigint", "pk": true },
+        { "name": "placed_at", "type": "timestamp" },
+        { "name": "status", "type": "varchar(20)", "values": ["placed", "paid", "packed", "shipped", "delivered", "cancelled", "refunded", "returned", "on hold", "payment failed"] },
+        { "name": "recommended_book_id", "type": "bigint", "fk": true }
+      ]
+    },
+    {
+      "id": "order_lines_with_individual_gift_wrapping_preferences",
+      "group": "Sales",
+      "caption": "Books and gift options for each purchase",
+      "columns": [
+        { "name": "order_id", "type": "bigint", "pk": true, "fk": true },
+        { "name": "book_id", "type": "bigint", "pk": true, "fk": true },
+        { "name": "personalized_gift_message_for_the_recipient", "type": "varchar(500)" },
+        { "name": "quantity", "type": "integer" }
+      ]
+    }
+  ],
+  "links": [
+    { "fk": { "table": "books", "column": "author_id" }, "pk": { "table": "authors", "column": "id" } },
+    { "fk": { "table": "orders", "column": "recommended_book_id" }, "pk": { "table": "books", "column": "id" }, "soft": true },
+    { "fk": { "table": "order_lines_with_individual_gift_wrapping_preferences", "column": "order_id" }, "pk": { "table": "orders", "column": "id" } },
+    { "fk": { "table": "order_lines_with_individual_gift_wrapping_preferences", "column": "book_id" }, "pk": { "table": "books", "column": "id" } }
+  ]
+}

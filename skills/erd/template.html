@@ -1,0 +1,920 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f5f4f3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#252326" media="(prefers-color-scheme: dark)">
+<title></title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<script src="https://cdn.jsdelivr.net/npm/elkjs@0.9.3/lib/elk.bundled.js" integrity="sha384-KO35c6PFq7tFxAEx6FtATwL9vOBOmCzQYr7GM0iTr3oO22s7Jc9OkclOH4AV7jwK" crossorigin="anonymous"></script>
+<style>
+  :root {
+    color-scheme: light dark;
+    --paper: #f5f4f3;
+    --card: #fff;
+    --ink: #312c35;
+    --muted: #68616c;
+    --rule: #ded9df;
+    --wire: #8a7e8e;
+    --accent: #784c7e;
+    --active: #eee1ef;
+    --badge: #f1e7f2;
+    --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+    --enter: 240ms;
+    --hover: 125ms;
+    --pan: 180ms;
+    --panel-width: min(380px, 34vw);
+    --dock-height: 0px;
+    --controls-space: 82px;
+    --workspace-height: 60dvh;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 14px/1.5 "Avenir Next", Avenir, "Segoe UI", sans-serif; }
+  ::selection { background: var(--active); color: var(--ink); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+  header { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px 24px; padding: 28px 32px 14px; }
+  h1 { margin: 0; font-size: 27px; font-weight: 650; letter-spacing: -.03em; text-wrap: balance; }
+  #summary { margin: 0; color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+  .legend { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 22px; margin: 0 32px; padding: 14px 0; border-block: 1px solid var(--rule); color: var(--muted); font-size: 12px; }
+  .legend span { display: inline-flex; gap: 7px; align-items: center; }
+  .swatch { width: 11px; height: 11px; border-radius: 3px; background: var(--group); border: 1px solid #312c3530; }
+  .key { display: inline-block; padding: 1px 4px; border-radius: 4px; font: 600 11px/1.4 "SFMono-Regular", Consolas, monospace; color: var(--accent); background: var(--badge); }
+  .key.uq { background: transparent; border: 1px dashed var(--accent); }
+  .key.fk { background: transparent; border: 1px solid var(--rule); color: var(--muted); }
+  .legend svg { width: 42px; height: 12px; overflow: visible; color: var(--wire); }
+  #viewport { position: relative; width: 100%; overflow: hidden; height: 65dvh; touch-action: none; cursor: grab; }
+  #viewport.dragging { cursor: grabbing; user-select: none; }
+  #stage { position: absolute; isolation: isolate; transform-origin: 0 0; }
+  #stage.reframing { transition: transform var(--pan) var(--ease-out); }
+  #wires { position: absolute; inset: 0; overflow: visible; pointer-events: none; }
+  .t { position: absolute; width: max-content; min-width: 250px; border-radius: 12px; background: var(--card); box-shadow: 0 0 0 1px var(--rule), 0 3px 4px #312c3504, 0 12px 26px #312c3508; transition: opacity var(--hover) ease; }
+  .h { --ink: #312c35; --muted: #51405d; display: block; width: 100%; text-align: left; padding: 12px 14px; border: 0; border-radius: 12px 12px 0 0; background: var(--group); color: var(--ink); cursor: pointer; font: inherit; }
+  .h strong { display: block; font-size: 15px; font-weight: 650; white-space: nowrap; }
+  .h small { display: block; margin-top: 3px; color: var(--muted); font-size: 12px; white-space: nowrap; }
+  .t ol { list-style: none; margin: 0; padding: 5px 0; font: 12px/1.4 "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
+  .t li { display: flex; align-items: center; gap: 22px; padding: 0 14px; min-height: 30px; white-space: nowrap; border-top: 1px solid var(--rule); }
+  .t li:first-child { border-top: 0; }
+  .column { display: flex; align-items: center; gap: 6px; }
+  .ty { margin-left: auto; color: var(--muted); font-size: 11px; }
+  #wires .edge { pointer-events: stroke; cursor: pointer; }
+  .edge .hit { stroke: transparent; stroke-width: 14; fill: none; }
+  .edge .vis { fill: none; stroke: var(--wire); stroke-width: 1.3; transition: opacity var(--hover) ease, stroke var(--hover) ease; }
+  #stage.hovering .t { opacity: .32; }
+  #stage.hovering .edge .vis { opacity: .13; }
+  #stage.hovering .t.lit, #stage.hovering .edge.lit .vis { opacity: 1; }
+  .edge.lit .vis { stroke: var(--accent); stroke-width: 2.3; filter: drop-shadow(0 0 2px var(--active)); }
+  .t li.lit { background: var(--active); }
+  #tip { position: fixed; z-index: 10; right: 20px; bottom: var(--controls-space); width: var(--panel-width); max-height: calc(var(--workspace-height) - 40px); overflow: auto; padding: 15px 18px; border-radius: 10px; background: var(--card); color: var(--ink); box-shadow: 0 0 0 1px var(--rule), 0 12px 32px #312c3518; font: 12px/1.5 "SFMono-Regular", Consolas, monospace; overflow-wrap: anywhere; }
+  #tip[data-locked="true"] { box-shadow: 0 0 0 1px var(--accent), 0 12px 32px #312c3518; }
+  #tip h2 { margin: 0 0 7px; font: 650 14px/1.4 "Avenir Next", Avenir, sans-serif; }
+  #tip p { margin: 5px 0; color: var(--muted); }
+  #tip ul { list-style: none; margin: 7px 0 0; padding: 0; }
+  #tip li + li { margin-top: 6px; }
+  #tip .values { margin-top: 12px; }
+  #tip code { white-space: pre-wrap; overflow-wrap: anywhere; }
+  #tip summary { cursor: pointer; color: var(--muted); }
+  .more { padding: 0; border: 0; background: transparent; color: var(--muted); font: inherit; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+  #zoom { position: fixed; bottom: 20px; left: 20px; z-index: 11; display: flex; align-items: center; gap: 2px; padding: 4px; border: 1px solid var(--rule); border-radius: 8px; background: var(--card); }
+  #zoom button, #help summary { min-width: 32px; min-height: 32px; padding: 5px 8px; border: 0; border-radius: 5px; background: transparent; color: var(--ink); cursor: pointer; font: inherit; }
+  #zoom button:hover { background: var(--active); }
+  #help { min-width: 0; color: var(--muted); font-size: 11px; }
+  #help summary { display: none; list-style: none; }
+  #help p { margin: 0 8px; }
+  kbd { padding: 1px 3px; border: 1px solid var(--rule); border-radius: 3px; font: inherit; }
+  .touch-hint { display: none; }
+  @media (pointer: coarse) { .mouse-hint { display: none; } .touch-hint { display: inline; } }
+  #help.compact summary { display: block; }
+  #help.compact p { display: none; }
+  #help.compact[open] p { display: block; width: min(300px, calc(100vw - 190px)); margin: 0 8px; }
+  @media (max-width: 700px) {
+    #viewport { width: 100%; }
+    #tip { width: calc(100vw - 40px); max-height: var(--dock-height); }
+  }
+  #err { margin: 0 32px; color: #a52836; }
+  #status { margin: 12px 32px; color: var(--muted); }
+  .skip { position: absolute; left: 16px; top: -100px; z-index: 20; padding: 8px; background: var(--card); }
+  .skip:focus { top: 8px; }
+  @media (prefers-color-scheme: dark) {
+    :root { --paper: #252326; --card: #302c33; --ink: #eee8ef; --muted: #c9bdcd; --rule: #554c59; --wire: #ac9ab3; --accent: #d6a4de; --active: #513b55; --badge: #513b55; }
+    #err { color: #ffabb4; }
+  }
+  @media (max-width: 600px) {
+    header { padding: 20px 18px 12px; }
+    .legend { margin-inline: 18px; }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    #stage.ready .t { animation: arrive var(--enter) var(--ease-out) backwards; animation-delay: var(--delay); }
+    #stage.ready .ink { animation: draw var(--enter) var(--ease-out) backwards; animation-delay: var(--wire-delay); }
+    @keyframes arrive { from { opacity: 0; transform: translateY(6px); } }
+    @keyframes draw { from { stroke-dashoffset: var(--length); } to { stroke-dashoffset: 0; } }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#viewport">Skip to diagram</a>
+<header><div><h1 id="diagram-title"></h1><p id="subtitle" hidden></p></div><p id="summary"></p></header>
+<div class="legend" aria-label="Diagram key">
+  <span><b class="key">PK</b> Primary key</span>
+  <span><b class="key fk">FK</b> Foreign key</span>
+  <span id="unique-key" hidden><b class="key uq">UQ</b> Unique key</span>
+  <span><svg aria-hidden="true" viewBox="0 0 42 12"><path d="M0 6H40M34 2L40 6L34 10" fill="none" stroke="currentColor"/></svg> FK points at its referenced PK or UQ</span>
+  <span id="soft-key" hidden><svg aria-hidden="true" viewBox="0 0 42 12"><path id="soft-line" d="M0 6H40" fill="none" stroke="currentColor"/><path d="M34 2L40 6L34 10" fill="none" stroke="currentColor"/></svg> Soft link: inferred, not enforced by the database</span>
+</div>
+<p id="status" role="status">Laying out the diagram…</p>
+<p id="err" role="alert"></p><aside id="tip" aria-label="Selection details" aria-live="off" hidden></aside>
+<main id="viewport" tabindex="0" aria-label="Interactive database diagram">
+  <div id="stage"><svg id="wires" aria-label="Foreign key relationships"><defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10" fill="none" stroke="context-stroke" stroke-width="1.5"/></marker>
+  </defs></svg></div>
+</main>
+<nav id="zoom" aria-label="Diagram zoom">
+  <button id="zoom-in" aria-label="Zoom in">+</button><button id="zoom-out" aria-label="Zoom out">−</button><button id="fit">Fit</button>
+  <details id="help"><summary aria-label="Interaction help">?</summary><p><span class="mouse-hint">Hover to trace · Click to lock · Click again or <kbd>Esc</kbd> to unlock · Drag to pan · Scroll to zoom</span><span class="touch-hint">Tap to lock · Tap again to unlock · Drag to pan · Pinch to zoom</span></p></details>
+</nav>
+<script id="schema" type="application/json">{{SCHEMA_JSON}}</script>
+<script>
+const schema = JSON.parse(document.getElementById("schema").textContent);
+const stage = document.getElementById("stage");
+const svg = document.getElementById("wires");
+const tip = document.getElementById("tip");
+const palette = ["#cba6f7", "#a6e3a1", "#fab387", "#f9e2af", "#f5c2e7"];
+const groups = [...new Set(schema.tables.map(table => table.group))];
+const rowByEndpoint = new Map();
+const tableElements = new Map();
+const edgeElements = [];
+const edgeRoutes = new Map();
+const endpointKey = endpoint => JSON.stringify([endpoint.table, endpoint.column]);
+const endpointLabel = endpoint => `${endpoint.table}.${endpoint.column}`;
+const STAGGER_MS = 35;
+const MAX_STAGGER_MS = 210;
+const CORNER_RADIUS_PX = 6;
+const MIN_TERMINAL_RUN_PX = 28;
+const PORT_CLEARANCE_PX = MIN_TERMINAL_RUN_PX + CORNER_RADIUS_PX;
+const LAYER_SPACING_PX = 140;
+const NODE_SPACING_PX = 32;
+const EDGE_SPACING_PX = 10;
+const REVEAL_WIDTH_PX = 18;
+const SOFT_DASH_PATTERN = "5 4";
+const MIN_VIEWPORT_HEIGHT_PX = 80;
+const SELF_LINK_MARGIN_PX = 32;
+const CONTROL_GAP_PX = 20;
+const DOCK_GAP_PX = 20;
+const DOCK_MAX_HEIGHT_PX = 240;
+const DOCK_HEIGHT_FRACTION = .32;
+const DOCK_BREAKPOINT_PX = 700;
+const PANEL_GAP_PX = 20;
+const FOCUS_GAP_PX = 8;
+const TRANSIT_GUTTER_PX = 12;
+const TRANSIT_IDLE_MS = 400;
+const ENTER_MS = parseFloat(getComputedStyle(stage).getPropertyValue("--enter"));
+const PANEL_LIST_LIMIT = 8;
+const MIN_SCALE = .1;
+const MAX_SCALE = 4;
+const FIT_PADDING_PX = 32;
+const ZOOM_STEP = 1.2;
+const WHEEL_RATE = .0015;
+const DRAG_THRESHOLD_PX = 4;
+const viewport = document.getElementById("viewport");
+const camera = { scale: 1, x: 0, y: 0 };
+let selection;
+let locked = false;
+let graphWidth = 0;
+let graphHeight = 0;
+let suppressClick = false;
+let hintIsWide;
+let panelTransit;
+let transitTimer;
+let pointerViewShifted = false;
+const staggerDelay = index => Math.min(index * STAGGER_MS, MAX_STAGGER_MS);
+const groupColor = group => palette[groups.indexOf(group) % palette.length];
+document.getElementById("soft-line").setAttribute("stroke-dasharray", SOFT_DASH_PATTERN);
+
+function element(tag, className, text) {
+  const node = document.createElement(tag);
+  node.className = className;
+  node.textContent = text;
+  return node;
+}
+
+function svgElement(tag, attributes) {
+  const node = document.createElementNS("http://www.w3.org/2000/svg", tag);
+  for (const [name, attributeValue] of Object.entries(attributes)) node.setAttribute(name, attributeValue);
+  return node;
+}
+
+function buildTables() {
+  for (const group of groups) {
+    const color = groupColor(group);
+    const entry = element("span", "", "");
+    entry.style.setProperty("--group", color);
+    entry.append(element("i", "swatch", ""), document.createTextNode(group));
+    document.querySelector(".legend").append(entry);
+  }
+  document.getElementById("summary").textContent = `${schema.tables.length} tables / ${schema.links.length} relationships`;
+  document.getElementById("soft-key").hidden = !schema.links.some(link => link.soft);
+  document.getElementById("unique-key").hidden = !schema.tables.some(table => table.columns.some(column => column.unique));
+
+  schema.tables.forEach((table, tableIndex) => {
+    const card = element("section", "t", "");
+    card.id = `table-${tableIndex}`;
+    card.dataset.table = table.id;
+    card.setAttribute("translate", "no");
+    const color = groupColor(table.group);
+    card.style.setProperty("--group", color);
+    card.style.setProperty("--delay", `${staggerDelay(tableIndex)}ms`);
+    const header = element("button", "h", "");
+    header.type = "button";
+    header.append(element("strong", "", table.id));
+    const hasCaption = table.caption.length > 0;
+    if (hasCaption) header.append(element("small", "", table.caption));
+    const columns = element("ol", "", "");
+    table.columns.forEach((column, columnIndex) => {
+      const row = element("li", "", "");
+      row.id = `column-${tableIndex}-${columnIndex}`;
+      row.tabIndex = 0;
+      row.dataset.label = `${table.id}.${column.name}`;
+      const label = element("span", "column", "");
+      if (column.pk) label.append(element("b", "key", "PK"));
+      if (column.fk) label.append(element("b", "key fk", "FK"));
+      if (column.unique) label.append(element("b", "key uq", "UQ"));
+      label.append(document.createTextNode(column.name));
+      row.append(label, element("span", "ty", compactType(column.type)));
+      rowByEndpoint.set(endpointKey({ table: table.id, column: column.name }), row);
+      columns.append(row);
+    });
+    card.append(header, columns);
+    tableElements.set(table.id, card);
+    stage.append(card);
+  });
+}
+
+function measureTables() {
+  return schema.tables.map(table => {
+    const card = tableElements.get(table.id);
+    const bounds = card.getBoundingClientRect();
+    const ports = table.columns.flatMap(column => {
+      const row = rowByEndpoint.get(endpointKey({ table: table.id, column: column.name }));
+      const rowBounds = row.getBoundingClientRect();
+      const y = rowBounds.top - bounds.top + rowBounds.height / 2;
+      return [
+        { id: `${row.id}:W`, x: 0, y, width: 0, height: 0, layoutOptions: { "elk.port.side": "WEST" } },
+        { id: `${row.id}:E`, x: bounds.width, y, width: 0, height: 0, layoutOptions: { "elk.port.side": "EAST" } },
+      ];
+    });
+    const selfLinks = schema.links.filter(link => link.fk.table === table.id && link.pk.table === table.id).length;
+    const margin = selfLinks * (PORT_CLEARANCE_PX + CORNER_RADIUS_PX);
+    return { id: card.id, width: bounds.width, height: bounds.height, ports, layoutOptions: { "elk.portConstraints": "FIXED_POS", "elk.margins": `[top=0,left=0,bottom=0,right=${margin}]` } };
+  });
+}
+
+function roundedPath(points) {
+  let path = `M${points[0].x},${points[0].y}`;
+  for (let index = 1; index < points.length - 1; index++) {
+    const previous = points[index - 1];
+    const corner = points[index];
+    const next = points[index + 1];
+    const before = Math.hypot(corner.x - previous.x, corner.y - previous.y);
+    const after = Math.hypot(next.x - corner.x, next.y - corner.y);
+    const firstBend = index === 1;
+    const lastBend = index === points.length - 2;
+    const startBudget = firstBend ? before - PORT_CLEARANCE_PX : CORNER_RADIUS_PX;
+    const endBudget = lastBend ? after - PORT_CLEARANCE_PX : CORNER_RADIUS_PX;
+    const radius = Math.max(0, Math.min(CORNER_RADIUS_PX, before / 2, after / 2, startBudget, endBudget));
+    const repeatedPoint = before === 0 || after === 0;
+    if (repeatedPoint) continue;
+    const a = { x: corner.x - (corner.x - previous.x) / before * radius, y: corner.y - (corner.y - previous.y) / before * radius };
+    const b = { x: corner.x + (next.x - corner.x) / after * radius, y: corner.y + (next.y - corner.y) / after * radius };
+    path += ` L${a.x},${a.y} Q${corner.x},${corner.y} ${b.x},${b.y}`;
+  }
+  const last = points[points.length - 1];
+  return `${path} L${last.x},${last.y}`;
+}
+
+function discreteType(type) {
+  const match = type.match(/^(enum|set)\s*\((.*)\)$/is);
+  if (!match) return undefined;
+  const values = [...match[2].matchAll(/'((?:[^'\\]|\\.|'')*)'/g)].map(match => match[1].replace(/''/g, "'").replace(/\\(.)/gs, (_, character) => ({ n: "\n", r: "\r", t: "\t", "0": "\0" }[character] ?? character)));
+  return { name: match[1].toLowerCase(), values };
+}
+
+function compactType(type) {
+  const discrete = discreteType(type);
+  return discrete ? `${discrete.name} ·${discrete.values.length}` : type;
+}
+
+function linkLabel(edge) {
+  return edge.getAttribute("aria-label") + (edge.dataset.soft === "true" ? " (soft)" : "");
+}
+
+function appendList(heading, lines) {
+  const empty = lines.length === 0;
+  if (empty) return;
+  const section = element("div", "values", "");
+  const hasHeading = Boolean(heading);
+  if (hasHeading) section.append(element("p", "", heading));
+  const list = element("ul", "", "");
+  const visible = locked ? lines : lines.slice(0, PANEL_LIST_LIMIT);
+  for (const line of visible) list.append(element("li", "", line));
+  const remaining = lines.length - visible.length;
+  const hasMore = remaining > 0;
+  if (hasMore) {
+    const button = element("button", "more", `+${remaining} more`);
+    button.type = "button";
+    button.addEventListener("click", event => {
+      event.stopPropagation();
+      pinSelection(selection);
+    });
+    const row = element("li", "", "");
+    row.append(button);
+    list.append(row);
+  }
+  section.append(list);
+  tip.append(section);
+}
+
+function renderPanel() {
+  tip.replaceChildren();
+  const linkCount = selection.edges.length;
+  const linkWord = linkCount === 1 ? "link" : "links";
+  const hasLinks = linkCount > 0;
+  const hasConnectedTables = selection.connected > 0;
+  const linkSuffix = hasLinks && !selection.isLine ? ` · ${linkCount} ${linkWord}` : "";
+  const tableSuffix = hasConnectedTables ? `, ${selection.connected} ${selection.connected === 1 ? "table" : "tables"}` : "";
+  tip.append(element("h2", "", `${selection.title}${linkSuffix}${tableSuffix}`));
+  const column = selection.column;
+  if (column) {
+    tip.append(element("p", "", column.type));
+    const keys = [column.pk ? "PK" : "", column.fk ? "FK" : "", column.unique ? "UQ" : ""].filter(Boolean);
+    const hasKeys = keys.length > 0;
+    if (hasKeys) tip.append(element("p", "", keys.join(" / ")));
+    const discrete = discreteType(column.type);
+    const values = discrete?.values ?? column.values ?? [];
+    appendList(discrete ? "Allowed values" : "Values set in code", values);
+  }
+  const showLinkList = !selection.isLine;
+  if (showLinkList) appendList("", selection.edges.map(linkLabel));
+  tip.hidden = false;
+  tip.dataset.locked = String(locked);
+  tip.setAttribute("aria-live", locked ? "polite" : "off");
+  positionPanel();
+}
+
+function clearHighlight() {
+  endPanelTransit();
+  pointerViewShifted = false;
+  stage.classList.remove("hovering");
+  document.querySelectorAll(".lit").forEach(node => node.classList.remove("lit"));
+  tip.hidden = true;
+  tip.replaceChildren();
+  selection = undefined;
+}
+
+function endPanelTransit() {
+  clearTimeout(transitTimer);
+  panelTransit = undefined;
+}
+
+function withinPanelTransit(event) {
+  if (!panelTransit) return false;
+  const { x, y, bounds, axis } = panelTransit;
+  const horizontal = axis === "x";
+  const pointer = horizontal ? event.clientX : event.clientY;
+  const origin = horizontal ? x : y;
+  const beforePanel = horizontal ? x < bounds.left : y < bounds.top;
+  const edge = horizontal ? (beforePanel ? bounds.left : bounds.right) : (beforePanel ? bounds.top : bounds.bottom);
+  const progress = (pointer - origin) / (edge - origin);
+  const between = progress >= 0 && progress <= 1;
+  if (!between) return false;
+  const cross = horizontal ? event.clientY : event.clientX;
+  const start = horizontal ? y : x;
+  const low = horizontal ? bounds.top : bounds.left;
+  const high = horizontal ? bounds.bottom : bounds.right;
+  const minimum = start * (1 - progress) + low * progress - TRANSIT_GUTTER_PX;
+  const maximum = start * (1 - progress) + high * progress + TRANSIT_GUTTER_PX;
+  return cross >= minimum && cross <= maximum;
+}
+
+function keepPanelDuringTransit(event) {
+  const bounds = tip.getBoundingClientRect();
+  const outsideHorizontally = event.clientX < bounds.left || event.clientX > bounds.right;
+  panelTransit = { x: event.clientX, y: event.clientY, bounds, axis: outsideHorizontally ? "x" : "y" };
+  clearTimeout(transitTimer);
+  transitTimer = setTimeout(() => {
+    endPanelTransit();
+    if (!locked) clearHighlight();
+  }, TRANSIT_IDLE_MS);
+}
+
+function highlight(next) {
+  clearHighlight();
+  selection = next;
+  stage.classList.add("hovering");
+  if (next.card) next.card.classList.add("lit");
+  if (next.row) next.row.classList.add("lit");
+  for (const edge of next.edges) {
+    edge.classList.add("lit");
+    svg.append(edge);
+    for (const rowId of [edge.dataset.fkRow, edge.dataset.pkRow]) {
+      const row = document.getElementById(rowId);
+      row.classList.add("lit");
+      row.closest(".t").classList.add("lit");
+    }
+  }
+  renderPanel();
+}
+
+function unlockSelection() {
+  locked = false;
+  const focusedSelection = document.activeElement.closest(".t, .edge");
+  if (focusedSelection) document.activeElement.blur();
+  clearHighlight();
+}
+
+function pinSelection(next) {
+  locked = true;
+  highlight(next);
+}
+
+function toggleSelectionLock(next) {
+  const alreadyLocked = locked && selection === next;
+  if (alreadyLocked) return unlockSelection();
+  pinSelection(next);
+}
+
+function bindHighlight(target, details) {
+  const preview = event => {
+    const suppressPreview = locked || viewport.classList.contains("dragging") || withinPanelTransit(event);
+    if (suppressPreview) return;
+    highlight(details);
+  };
+  target.addEventListener("mouseenter", preview);
+  target.addEventListener("focus", preview);
+  const leave = event => {
+    const keepSelection = locked || pointerViewShifted || tip.contains(event.relatedTarget) || target.matches(":focus-visible");
+    if (keepSelection) return;
+    const pointerLeave = event.type === "mouseleave";
+    if (pointerLeave) keepPanelDuringTransit(event);
+    else clearHighlight();
+  };
+  target.addEventListener("mouseleave", leave);
+  target.addEventListener("blur", leave);
+  target.addEventListener("click", event => {
+    event.stopPropagation();
+    toggleSelectionLock(details);
+  });
+  target.addEventListener("keydown", event => {
+    const activate = !event.repeat && (event.key === "Enter" || event.key === " ");
+    if (!activate) return;
+    event.preventDefault();
+    toggleSelectionLock(details);
+  });
+}
+
+function bindTables() {
+  for (const table of schema.tables) {
+    const card = tableElements.get(table.id);
+    const attached = edgeElements.filter(edge => card.contains(document.getElementById(edge.dataset.fkRow)) || card.contains(document.getElementById(edge.dataset.pkRow)));
+    const connected = new Set(attached.flatMap(edge => [edge.dataset.fkRow, edge.dataset.pkRow]).map(id => document.getElementById(id).closest(".t")));
+    connected.delete(card);
+    const details = { edges: attached, title: table.id, card, connected: connected.size };
+    bindHighlight(card.querySelector(".h"), details);
+    card.addEventListener("click", event => {
+      const isCardBackground = event.target === card || event.target === card.querySelector("ol");
+      if (isCardBackground) {
+        event.stopPropagation();
+        toggleSelectionLock(details);
+      }
+    });
+    for (const column of table.columns) {
+      const row = rowByEndpoint.get(endpointKey({ table: table.id, column: column.name }));
+      const attached = edgeElements.filter(edge => edge.dataset.fkRow === row.id || edge.dataset.pkRow === row.id);
+      bindHighlight(row, { edges: attached, title: row.dataset.label, card, row, column });
+    }
+  }
+}
+
+function drawEdges(layoutEdges) {
+  for (const edge of layoutEdges) {
+    const link = schema.links[Number(edge.id.slice(1))];
+    const label = `${endpointLabel(link.fk)} → ${endpointLabel(link.pk)}`;
+    const group = svgElement("g", { class: "edge", tabindex: "0", role: "button", "aria-label": label });
+    group.dataset.fkRow = rowByEndpoint.get(endpointKey(link.fk)).id;
+    group.dataset.pkRow = rowByEndpoint.get(endpointKey(link.pk)).id;
+    group.dataset.soft = String(Boolean(link.soft));
+    const routes = [];
+    edgeRoutes.set(group, routes);
+    for (const section of edge.sections || []) {
+      const points = [section.startPoint, ...(section.bendPoints || []), section.endPoint].reverse();
+      routes.push(points);
+      const path = roundedPath(points);
+      const hit = svgElement("path", { d: path, class: "hit" });
+      const ink = svgElement("path", { d: path, class: "ink", fill: "none", stroke: "white", "stroke-width": String(REVEAL_WIDTH_PX) });
+      const maskId = `reveal-${edge.id}-${group.children.length}`;
+      const mask = svgElement("mask", { id: maskId, maskUnits: "userSpaceOnUse", x: "0", y: "0", width: stage.style.width, height: stage.style.height });
+      mask.append(ink);
+      svg.querySelector("defs").append(mask);
+      const visible = svgElement("path", { d: path, class: "vis", "marker-end": "url(#arrow)", mask: `url(#${maskId})` });
+      if (link.soft) visible.setAttribute("stroke-dasharray", SOFT_DASH_PATTERN);
+      group.append(hit, visible);
+      svg.append(group);
+      const length = ink.getTotalLength();
+      ink.style.strokeDasharray = `${length} ${length}`;
+      ink.style.setProperty("--length", length);
+      ink.style.setProperty("--wire-delay", `${staggerDelay(schema.tables.length) + ENTER_MS}ms`);
+    }
+    edgeElements.push(group);
+    bindHighlight(group, { edges: [group], title: label + (link.soft ? " (soft)" : ""), isLine: true });
+  }
+}
+
+function applyCamera() {
+  stage.style.transform = `translate(${camera.x}px, ${camera.y}px) scale(${camera.scale})`;
+}
+
+function rectanglesOverlap(a, b) {
+  return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+}
+
+function focusBounds() {
+  const expand = (bounds, gap) => ({ left: bounds.left - gap, right: bounds.right + gap, top: bounds.top - gap, bottom: bounds.bottom + gap });
+  const bounds = [...document.querySelectorAll(".t.lit")].map(card => expand(card.getBoundingClientRect(), FOCUS_GAP_PX));
+  const matrix = svg.getScreenCTM();
+  const gap = FOCUS_GAP_PX + CORNER_RADIUS_PX * camera.scale;
+  for (const edge of edgeElements) {
+    const highlighted = edge.classList.contains("lit");
+    if (!highlighted) continue;
+    for (const route of edgeRoutes.get(edge)) {
+      const points = route.map(point => new DOMPoint(point.x, point.y).matrixTransform(matrix));
+      for (let index = 1; index < points.length; index++) {
+        const a = points[index - 1];
+        const b = points[index];
+        bounds.push(expand({ left: Math.min(a.x, b.x), right: Math.max(a.x, b.x), top: Math.min(a.y, b.y), bottom: Math.max(a.y, b.y) }, gap));
+      }
+    }
+  }
+  return bounds;
+}
+
+function smallestClearOffset(intervals) {
+  const merged = [];
+  for (const interval of intervals.sort((a, b) => a.low - b.low)) {
+    const previous = merged.at(-1);
+    const touching = previous && interval.low <= previous.high;
+    if (touching) previous.high = Math.max(previous.high, interval.high);
+    else merged.push({ ...interval });
+  }
+  const blocked = merged.find(interval => interval.low <= 0 && interval.high >= 0);
+  if (!blocked) return 0;
+  return Math.abs(blocked.low) < Math.abs(blocked.high) ? blocked.low - 1 : blocked.high + 1;
+}
+
+function movePanel(bounds) {
+  tip.style.left = `${bounds.left}px`;
+  tip.style.top = `${bounds.top}px`;
+  tip.style.right = "auto";
+  tip.style.bottom = "auto";
+}
+
+function stopPanelPan() {
+  const reframing = stage.classList.contains("reframing");
+  if (!reframing) return;
+  const matrix = new DOMMatrix(getComputedStyle(stage).transform);
+  camera.x = matrix.e;
+  camera.y = matrix.f;
+  camera.scale = matrix.a;
+  stage.classList.remove("reframing");
+  tip.style.visibility = "";
+  pointerViewShifted = false;
+  applyCamera();
+}
+
+function positionPanel() {
+  const unavailable = !selection || tip.hidden || stage.classList.contains("reframing");
+  if (unavailable) return;
+  const docked = innerWidth <= DOCK_BREAKPOINT_PX;
+  if (docked) {
+    for (const side of ["left", "top", "right", "bottom"]) tip.style[side] = "";
+    return;
+  }
+
+  const viewportBounds = viewport.getBoundingClientRect();
+  const panel = tip.getBoundingClientRect();
+  const left = viewportBounds.left + PANEL_GAP_PX;
+  const right = viewportBounds.right - panel.width - PANEL_GAP_PX;
+  const top = viewportBounds.top + PANEL_GAP_PX;
+  const bottom = viewportBounds.bottom - panel.height - PANEL_GAP_PX;
+  const corners = [[right, bottom], [right, top], [left, bottom], [left, top]].map(([x, y]) => ({ left: x, right: x + panel.width, top: y, bottom: y + panel.height }));
+  const obstacles = focusBounds();
+  const freeCorner = corners.find(corner => !obstacles.some(bounds => rectanglesOverlap(corner, bounds)));
+  if (freeCorner) {
+    movePanel(freeCorner);
+    return;
+  }
+
+  const shifts = corners.flatMap(corner => {
+    const across = obstacles.filter(bounds => bounds.top < corner.bottom && bounds.bottom > corner.top);
+    const below = obstacles.filter(bounds => bounds.left < corner.right && bounds.right > corner.left);
+    const x = smallestClearOffset(across.map(bounds => ({ low: corner.left - bounds.right, high: corner.right - bounds.left })));
+    const y = smallestClearOffset(below.map(bounds => ({ low: corner.top - bounds.bottom, high: corner.bottom - bounds.top })));
+    return [{ corner, x, y: 0 }, { corner, x: 0, y }];
+  });
+  const shift = shifts.sort((a, b) => Math.hypot(a.x, a.y) - Math.hypot(b.x, b.y))[0];
+  movePanel(shift.corner);
+  pointerViewShifted = true;
+  const animatePan = !matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (animatePan) {
+    stage.classList.add("reframing");
+    tip.style.visibility = "hidden";
+  }
+  camera.x += shift.x;
+  camera.y += shift.y;
+  applyCamera();
+}
+
+function fitDiagramToViewport() {
+  stopPanelPan();
+  camera.scale = Math.min(1, (viewport.clientWidth - FIT_PADDING_PX * 2) / graphWidth, (viewport.clientHeight - FIT_PADDING_PX * 2) / graphHeight);
+  camera.x = (viewport.clientWidth - graphWidth * camera.scale) / 2;
+  camera.y = (viewport.clientHeight - graphHeight * camera.scale) / 2;
+  applyCamera();
+  positionPanel();
+}
+
+function updateHintLayout() {
+  const help = document.getElementById("help");
+  const controls = document.getElementById("zoom");
+  const hint = help.querySelector("p");
+  const probe = hint.cloneNode(true);
+  probe.setAttribute("aria-hidden", "true");
+  probe.style.cssText = "position:fixed;visibility:hidden;width:max-content;white-space:nowrap;margin:0";
+  probe.style.font = getComputedStyle(help).font;
+  document.body.append(probe);
+  const hintWidth = probe.getBoundingClientRect().width;
+  probe.remove();
+  const controlStyle = getComputedStyle(controls);
+  const hintStyle = getComputedStyle(hint);
+  const buttonsWidth = [...controls.querySelectorAll(":scope > button")].reduce((width, button) => width + button.getBoundingClientRect().width, 0);
+  const controlInsets = parseFloat(controlStyle.paddingLeft) + parseFloat(controlStyle.paddingRight) + parseFloat(controlStyle.borderLeftWidth) + parseFloat(controlStyle.borderRightWidth);
+  const hintMargins = parseFloat(hintStyle.marginLeft) + parseFloat(hintStyle.marginRight);
+  const gaps = parseFloat(controlStyle.columnGap) * (controls.children.length - 1);
+  const requiredWidth = buttonsWidth + controlInsets + hintMargins + gaps + hintWidth;
+  const wideHint = requiredWidth <= innerWidth - CONTROL_GAP_PX * 2;
+  help.classList.toggle("compact", !wideHint);
+  const hintModeChanged = wideHint !== hintIsWide;
+  if (hintModeChanged) {
+    hintIsWide = wideHint;
+    help.open = wideHint;
+  }
+}
+
+function resizeWorkspaceAndFit() {
+  updateHintLayout();
+  const controlsHeight = document.getElementById("zoom").getBoundingClientRect().height;
+  const controlsSpace = controlsHeight + CONTROL_GAP_PX * 2;
+  document.documentElement.style.setProperty("--controls-space", `${controlsSpace}px`);
+  const top = viewport.getBoundingClientRect().top;
+  const availableHeight = Math.max(MIN_VIEWPORT_HEIGHT_PX, innerHeight - top - controlsSpace);
+  document.documentElement.style.setProperty("--workspace-height", `${availableHeight}px`);
+  const dockedPanel = innerWidth <= DOCK_BREAKPOINT_PX;
+  const dockAvailable = Math.max(0, availableHeight - MIN_VIEWPORT_HEIGHT_PX - DOCK_GAP_PX);
+  const dockHeight = dockedPanel ? Math.min(DOCK_MAX_HEIGHT_PX, innerHeight * DOCK_HEIGHT_FRACTION, dockAvailable) : 0;
+  document.documentElement.style.setProperty("--dock-height", `${dockHeight}px`);
+  const dockGap = dockedPanel ? DOCK_GAP_PX : 0;
+  viewport.style.height = `${Math.max(MIN_VIEWPORT_HEIGHT_PX, availableHeight - dockHeight - dockGap)}px`;
+  fitDiagramToViewport();
+}
+
+function zoomAt(factor, x, y) {
+  stopPanelPan();
+  const minimumScale = Math.min(MIN_SCALE, camera.scale);
+  const scale = Math.max(minimumScale, Math.min(MAX_SCALE, camera.scale * factor));
+  const ratio = scale / camera.scale;
+  camera.x = x - (x - camera.x) * ratio;
+  camera.y = y - (y - camera.y) * ratio;
+  camera.scale = scale;
+  applyCamera();
+  positionPanel();
+}
+
+function bindCamera() {
+  const pointers = new Map();
+  let gesture;
+  const midpoint = () => {
+    const points = [...pointers.values()];
+    const second = points[1] ?? points[0];
+    return { x: (points[0].x + second.x) / 2, y: (points[0].y + second.y) / 2, distance: Math.hypot(points[0].x - second.x, points[0].y - second.y) };
+  };
+  viewport.addEventListener("pointerdown", event => {
+    stopPanelPan();
+    const primaryButton = event.button === 0;
+    if (!primaryButton) return;
+    const startingGesture = pointers.size === 0;
+    if (startingGesture) suppressClick = false;
+    pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    gesture = midpoint();
+    gesture.startX = gesture.x;
+    gesture.startY = gesture.y;
+    gesture.dragged = false;
+  });
+  window.addEventListener("pointermove", event => {
+    const tracked = pointers.has(event.pointerId);
+    if (!tracked) return;
+    pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    const next = midpoint();
+    const moved = Math.hypot(next.x - gesture.startX, next.y - gesture.startY) > DRAG_THRESHOLD_PX;
+    const pinching = pointers.size > 1;
+    const stationary = !gesture.dragged && !moved && !pinching;
+    if (stationary) return;
+    gesture.dragged = true;
+    suppressClick = true;
+    viewport.classList.add("dragging");
+    viewport.setPointerCapture(event.pointerId);
+    const resizePinch = pinching && gesture.distance > 0;
+    if (resizePinch) {
+      const bounds = viewport.getBoundingClientRect();
+      zoomAt(next.distance / gesture.distance, gesture.x - bounds.left, gesture.y - bounds.top);
+    }
+    camera.x += next.x - gesture.x;
+    camera.y += next.y - gesture.y;
+    applyCamera();
+    positionPanel();
+    Object.assign(gesture, next);
+  });
+  const endPointer = event => {
+    const tracked = pointers.has(event.pointerId);
+    if (!tracked) return;
+    const cancelled = event.type === "pointercancel";
+    if (cancelled) suppressClick = false;
+    pointers.delete(event.pointerId);
+    const finished = pointers.size === 0;
+    if (finished) {
+      gesture = undefined;
+      viewport.classList.remove("dragging");
+    } else {
+      const next = midpoint();
+      gesture = { ...next, startX: next.x, startY: next.y, dragged: true };
+    }
+  };
+  window.addEventListener("pointerup", endPointer);
+  window.addEventListener("pointercancel", endPointer);
+  viewport.addEventListener("wheel", event => {
+    event.preventDefault();
+    const bounds = viewport.getBoundingClientRect();
+    const lineMode = event.deltaMode === WheelEvent.DOM_DELTA_LINE;
+    const pageMode = event.deltaMode === WheelEvent.DOM_DELTA_PAGE;
+    const lineHeight = parseFloat(getComputedStyle(viewport).lineHeight);
+    const unitPixels = lineMode ? lineHeight : pageMode ? viewport.clientHeight : 1;
+    const deltaPixels = event.deltaY * unitPixels;
+    zoomAt(Math.exp(-deltaPixels * WHEEL_RATE), event.clientX - bounds.left, event.clientY - bounds.top);
+  }, { passive: false });
+  document.getElementById("zoom-in").addEventListener("click", () => zoomAt(ZOOM_STEP, viewport.clientWidth / 2, viewport.clientHeight / 2));
+  document.getElementById("zoom-out").addEventListener("click", () => zoomAt(1 / ZOOM_STEP, viewport.clientWidth / 2, viewport.clientHeight / 2));
+  document.getElementById("fit").addEventListener("click", fitDiagramToViewport);
+ }
+
+function bindSelectionControls() {
+  document.addEventListener("mousemove", event => {
+    const insidePanel = tip.contains(event.target);
+    if (insidePanel) {
+      endPanelTransit();
+      return;
+    }
+    const shiftedView = pointerViewShifted && !locked;
+    if (shiftedView) {
+      pointerViewShifted = false;
+      const insideFocus = event.target.closest(".lit");
+      if (!insideFocus) clearHighlight();
+    }
+    if (!panelTransit) return;
+    const crossing = withinPanelTransit(event);
+    if (crossing) {
+      clearTimeout(transitTimer);
+      transitTimer = setTimeout(() => {
+        endPanelTransit();
+        if (!locked) clearHighlight();
+      }, TRANSIT_IDLE_MS);
+    } else clearHighlight();
+  });
+  document.addEventListener("click", event => {
+    if (!suppressClick) return;
+    suppressClick = false;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+  }, true);
+  document.addEventListener("click", event => {
+    const detached = !event.target.isConnected;
+    if (detached) return;
+    const onControl = event.target.closest("#zoom, #tip");
+    if (onControl) return;
+    unlockSelection();
+  });
+  document.addEventListener("keydown", event => {
+    const escape = event.key === "Escape";
+    if (escape) unlockSelection();
+  });
+  tip.addEventListener("click", event => {
+    event.stopPropagation();
+    const keepPanel = !selection || locked;
+    if (keepPanel) return;
+    pinSelection(selection);
+  });
+  tip.addEventListener("mouseleave", () => {
+    if (!locked) clearHighlight();
+  });
+}
+
+function bindWorkspaceResize() {
+  stage.addEventListener("transitionend", event => {
+    const finishedPan = event.target === stage && event.propertyName === "transform";
+    if (!finishedPan) return;
+    stage.classList.remove("reframing");
+    tip.style.visibility = "";
+    positionPanel();
+  });
+  window.addEventListener("resize", resizeWorkspaceAndFit);
+  new ResizeObserver(resizeWorkspaceAndFit).observe(document.getElementById("zoom"));
+}
+
+async function render() {
+  buildTables();
+  const nodes = measureTables();
+  const edges = schema.links.map((link, index) => ({
+    id: `e${index}`,
+    sources: [`${rowByEndpoint.get(endpointKey(link.pk)).id}:E`],
+    targets: [`${rowByEndpoint.get(endpointKey(link.fk)).id}:W`],
+  })).filter((edge, index) => schema.links[index].fk.table !== schema.links[index].pk.table);
+  const layout = await new ELK().layout({ id: "root", children: nodes, edges, layoutOptions: {
+    "elk.algorithm": "layered",
+    "elk.direction": "RIGHT",
+    "elk.edgeRouting": "ORTHOGONAL",
+    "elk.layered.spacing.nodeNodeBetweenLayers": String(LAYER_SPACING_PX),
+    "elk.spacing.nodeNode": String(NODE_SPACING_PX),
+    "elk.spacing.edgeEdge": String(EDGE_SPACING_PX),
+    "elk.layered.spacing.edgeNodeBetweenLayers": String(PORT_CLEARANCE_PX + CORNER_RADIUS_PX),
+    "elk.spacing.portPort": String(MIN_TERMINAL_RUN_PX),
+    "elk.layered.nodePlacement.strategy": "NETWORK_SIMPLEX",
+    "elk.layered.crossingMinimization.strategy": "LAYER_SWEEP",
+    "elk.layered.considerModelOrder.strategy": "NODES_AND_EDGES",
+  } });
+  for (const node of layout.children) {
+    const card = document.getElementById(node.id);
+    card.style.left = `${node.x}px`;
+    card.style.top = `${node.y}px`;
+  }
+  graphWidth = layout.width;
+  graphHeight = layout.height;
+  const selfEdges = schema.links.flatMap((link, index) => {
+    const selfReference = link.fk.table === link.pk.table;
+    if (!selfReference) return [];
+    const card = tableElements.get(link.fk.table);
+    const node = layout.children.find(node => node.id === card.id);
+    const foreignKeyRow = rowByEndpoint.get(endpointKey(link.fk));
+    const referencedRow = rowByEndpoint.get(endpointKey(link.pk));
+    const source = node.ports.find(port => port.id === `${referencedRow.id}:E`);
+    const target = node.ports.find(port => port.id === `${foreignKeyRow.id}:E`);
+    const x = node.x + node.width;
+    const selfIndex = schema.links.slice(0, index).filter(previous => previous.fk.table === link.fk.table && previous.pk.table === link.pk.table).length;
+    const bracket = x + (selfIndex + 1) * (PORT_CLEARANCE_PX + CORNER_RADIUS_PX);
+    graphWidth = Math.max(graphWidth, bracket + SELF_LINK_MARGIN_PX);
+    return [{ id: `e${index}`, sections: [{ startPoint: { x, y: node.y + source.y }, bendPoints: [{ x: bracket, y: node.y + source.y }, { x: bracket, y: node.y + target.y }], endPoint: { x, y: node.y + target.y } }] }];
+  });
+  stage.style.width = `${graphWidth}px`;
+  stage.style.height = `${graphHeight}px`;
+  svg.setAttribute("width", graphWidth);
+  svg.setAttribute("height", graphHeight);
+  drawEdges([...layout.edges, ...selfEdges].sort((a, b) => Number(a.id.slice(1)) - Number(b.id.slice(1))));
+  bindTables();
+  bindCamera();
+  bindSelectionControls();
+  bindWorkspaceResize();
+  document.getElementById("status").hidden = true;
+  resizeWorkspaceAndFit();
+  stage.classList.add("ready");
+  stage.dataset.state = "ready";
+}
+
+document.title = schema.title;
+document.getElementById("diagram-title").textContent = schema.title;
+const hasSubtitle = Boolean(schema.subtitle);
+if (hasSubtitle) {
+  const subtitle = document.getElementById("subtitle");
+  subtitle.textContent = schema.subtitle;
+  subtitle.hidden = false;
+}
+
+render().catch(error => {
+  document.getElementById("status").hidden = true;
+  const libraryMissing = typeof ELK === "undefined";
+  document.getElementById("err").textContent = libraryMissing
+    ? "The layout library did not load. Check the network connection and CDN access, then reload."
+    : `Layout failed: ${error.message}. Check the schema and regenerate the diagram.`;
+  stage.dataset.state = "error";
+});
+</script>
+</body>
+</html>

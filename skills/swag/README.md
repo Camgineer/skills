@@ -4,7 +4,9 @@
 
 It keeps an existing palette unless color is open for exploration. When it is, swag suggests a few directions. Established palettes are starting points; a custom palette is welcome when it fits the brief and passes contrast checks.
 
-Visible state changes get a designed transition. Small squash and stretch, follow-through, and responsive settling give interactions presence. Frequent actions use restrained motion, and reduced-motion preferences get a gentler treatment. Actions and keyboard focus stay responsive.
+The design keeps the main view calm, reveals detail without covering content, and makes interactions discoverable. Content stays readable and data stays exact. Palette suggestions favor soft accents on neutral surfaces when the brief leaves color open.
+
+Motion that passes animate's gate gets purposeful easing and weight. Small squash and stretch, follow-through, and responsive settling give eligible interactions presence. Animate's keyboard and frequency exclusions remain binding, and reduced-motion preferences get a gentler treatment.
 
 ## Install
 

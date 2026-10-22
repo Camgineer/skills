@@ -1,86 +1,67 @@
 ---
 name: swag
-description: "One web design workflow for aesthetic direction, palette suggestions, critique and polish, expressive motion, and accessibility. Use /swag with a web page, component, or brief. Requires four installed companion skills."
-disable-model-invocation: true
+description: "Use for look-and-feel work across web and native interfaces, terminal UIs and CLI output, diagrams, slides, generated images, and charts. Use for the visual form and layout of documents, Markdown, and emails, not for drafting their words. Sets visual direction and applies the surface's design and verification guidance."
 license: Apache-2.0
 ---
 
 # Swag
 
-Turn a brief or existing web interface into a finished design through four installed skills. Read each skill's instructions when entering its stage. This file owns their order and handoffs; the companion skills own their methods.
+Make the requested surface look and feel deliberate, clear, and complete. Apply the shared principles first, then load the guidance for the actual medium. This skill owns the design principles and handoffs; companions own their methods and format requirements.
 
 ## Establish the target
 
-Resolve the requested page, component, or brief from the request and project context. Read the relevant source, existing design guidance, assets, and constraints. For an existing page, inspect its render and capture a before screenshot when browser tools are available. Preserve factual content and working behavior. Ask only when a missing choice changes the work and cannot be resolved from context.
+Identify the audience, purpose, surface, output format, and viewing conditions from the request and existing work. Inspect the source and rendered result where available. Preserve factual content, working behavior, and established identity during refinement. Replace the direction only when the request authorizes redesign. For review-only work, inspect without editing and return findings with source locations.
 
-Swag targets web interfaces. For a native-only target, report that it is outside this workflow's scope and stop before edits.
+Reuse the available brief and constraints. Ask only when a missing decision changes the result and cannot be resolved from context. Loading swag carries existing authorization; it does not authorize sending email, publishing, or unrelated changes.
 
-Treat a request to polish as refinement within the existing identity. Replace the visual direction only when the request authorizes redesign. For a review-only request, assess each stage without editing source; return findings and recommendations.
+## Shared design principles
 
-Find all four companion skills before editing. Prefer the runtime's named skill locations. Otherwise check project `.agents/skills` and `.claude/skills`, then `~/.agents/skills` and `~/.claude/skills`. Select one installed copy per name and resolve its supporting files relative to that copy. If a dependency is missing or unreadable, name it and stop before edits. Installation and upstream credits are in [README.md](README.md) and [CREDITS.md](CREDITS.md).
+- Ground the visual direction in the subject and audience. Keep the content hierarchy, type treatment, palette, and composition coherent across the chosen routes.
+- Keep the main view calm and focused. Reveal secondary detail only for the highlighted or selected item on interactive surfaces. Disclose long lists progressively, with a clear way to reach the complete content. In static work, put supporting detail in a clearly connected secondary reading layer so it remains available without overwhelming the main message.
+- Keep details accessible without covering the content they explain. Identify their subject, organize them for scanning, and omit empty presentation fields.
+- Where interaction exists, show quiet, concise guidance on the surface. Adapt it to the available space and input method, with equivalent ways to act through pointer, keyboard, and touch where supported. Keep interactive actions accessible through the keyboard.
+- Keep transient highlight distinct from deliberate, persistent selection. Selection must be easy to reverse, move, and clear. Dragging must never accidentally select an item.
+- Let content determine the space it needs. Keep full names and labels readable without truncation, clipping, or overlap. Adapt composition to the actual viewing width, page, or frame.
+- Fit large views to their frame and adapt when it changes. Where interaction exists, let people pan and zoom across the whole space, centered on their point of interest, while text stays crisp.
+- Give connector ends and arrowheads clear space, with a straight approach that keeps them distinct from bends, labels, and neighboring content.
+- Represent data faithfully. Preserve exact types and values, identify unknowns explicitly, and make the full set of allowed discrete values available. Layout changes must not simplify away meaning.
+- Explain every visual encoding in a plain-language legend. Meaning must remain understandable beyond color alone.
+- Give each page, view, or artifact a title that identifies its actual content, purpose, or supported finding.
+- Use hierarchy, alignment, spacing, and typographic weight to direct attention. Decoration earns its place by helping the audience understand or act.
+- Where motion is supported and appropriate, give state changes purposeful easing and weight. Respect reduced-motion preferences and keep actions responsive. Static work gets its presence from composition; it needs no simulated animation.
 
-## Run the stages in order
+### Palette
 
-### 1. Frontend-design owns aesthetic direction
+Keep a coherent existing palette and respect the host's theme unless the request opens color for exploration. When choosing a palette, use the one the user named. Otherwise, choose soft pastel accents on neutral surfaces with distinct neighboring groups. Avoid the default blue/teal "AI" look unless the user or brand asks for it. Treat this preference as part of the brief. Name the chosen palette, show alternatives with swatches or tokens and their semantic color roles, and proceed without waiting for a choice. Switch if the user chooses another.
 
-Read and apply the installed `frontend-design` skill to this target and brief. Set the visual direction before implementation. For refinement, describe the incumbent identity and the changes that fit it. For new work or redesign, choose a direction grounded in the subject and audience.
+Use actual tokens from an established palette or the project's system instead of approximating them. A custom palette is equally valid when it serves the brief; explain the rationale. Verify contrast in each used state and medium. Accessibility, truthful data encoding, and terminal or document theme constraints take priority over softness.
 
-Keep a coherent existing palette unless the request opens color for exploration. When choosing a palette, use the one the user named. Otherwise, pick soft pastel accents on neutral surfaces and make neighboring groups clearly distinct. Avoid the default blue/teal "AI" look unless the user or brand asks for it. Pass swag's soft-palette preference to frontend-design as part of the brief. Say which palette is chosen, offer alternatives with swatches or tokens and their semantic roles, and proceed without waiting for a choice. Switch if the user chooses another.
+## Choose the surface route
 
-Established palettes and the project's design system are useful starting points. Read their actual tokens from the installed package or official source instead of approximating them. A custom palette is equally valid when it serves the brief; explain its rationale and check contrast in every used state. Name the chosen source or mark the palette as custom in the handoff.
+Choose by the audience's task and delivery medium, not the filename alone. An HTML email follows the email route; a chart in a dashboard needs both the chart and web routes. Load only the relevant references. For a mixed artifact, keep one visual direction and apply each route to the part it owns.
 
-Complete this stage with a compact design brief covering the primary action, layout, typography, palette, and the element that gives this work its character. Check that each choice follows the request. Carry this same brief into the remaining stages.
+| Surface | Load when | Guidance |
+|---|---|---|
+| Web interfaces | Building, refining, or reviewing browser UI | [Web](references/web.md) |
+| Terminal UIs and CLI output | Designing commands, prompts, status, or terminal layouts | [Terminal](references/terminal.md) |
+| Documents and Markdown | Formatting a reading or print artifact | [Documents](references/documents.md) |
+| Diagrams | Explaining structure, relationships, or flows | [Diagrams](references/diagrams.md) |
+| Slides | Designing a presentation or deck | [Slides](references/slides.md) |
+| Emails | Designing a message or email template | [Emails](references/emails.md) |
+| Generated images | Creating or refining a raster visual | [Images](references/images.md) |
+| Charts | Encoding data in any medium | [Charts](references/charts.md) |
 
-### 2. Impeccable owns critique and polish
+For another surface, including native applications, apply the shared principles with the host's relevant platform or format companion. Preserve its native conventions and verify in that medium; browser guidance is specific to the web route.
 
-Read the installed `impeccable` skill and run its setup from the target project, using that installation's base directory. Pass a concrete task to its critique and polish playbooks so it enters the work rather than its no-argument menu. Load the playbooks and quality guidance they require.
-
-Use the stage-one brief as the chosen direction. Apply the design principles below during critique and polish. Critique the target, fix issues within scope, and implement or refine the design with impeccable's guidance. For new work or redesign, use its layout and build guidance within that direction. Skip its direction selection, repeated confirmation, and DESIGN.md replacement unless the request explicitly asks for them. Keep the requested page as the deliverable; documentation, hooks, and unrelated project repairs require their own task scope.
-
-Complete this stage when the primary task works, the design matches the brief, and the critique's in-scope issues are fixed or recorded with a concrete reason. Pass any interaction that could benefit from motion to stage three.
-
-### 3. Animate owns motion
-
-Read the installed `animate` skill. Supply the concrete interactions, their purpose, expected use frequency, and swag's motion direction as its task; its greeting-only path applies to an invocation without a task.
-
-For motion that passes animate's gate, give visible state changes presence through purposeful easing. Use the animator's toolkit deliberately: anticipation, acceleration and deceleration, follow-through, and small squash or stretch where the material and interaction support it. Make one coherent motion language; a reading surface can feel composed while an expressive page can feel physical.
-
-Static content needs no continuous animation. Real-time progress and direct manipulation must stay faithful to the input rather than acquire artificial lag.
-
-Follow animate for implementation choices and safeguards. Inspect rapid repeated input, keyboard use, entry and exit, and the reduced-motion treatment. Finish with the motion decisions and implemented parameters.
-
-### 4. Web-design-guidelines owns the final web review
-
-Read the installed `web-design-guidelines` skill and fetch its current guidelines as instructed. In edit mode, give it the exact changed target files. In review-only mode, give it the target files under review. Review that file set against every applicable rule. In edit mode, fix in-scope findings, then recheck affected behavior and capture the after screenshot at the same viewport and state as before. In review-only mode, report findings without changing source.
-
-If the guidelines cannot be fetched, report that this stage is incomplete. Use available local guidance for useful checks, with its age or source identified; never label that fallback a current-guidelines pass.
+Resolve only the companions needed by the chosen route. Prefer the runtime's named skill locations, then project `.agents/skills` and `.claude/skills`, then their user-level equivalents. Read each selected companion before applying it and resolve supporting files relative to that copy. A missing required companion stops that route before edits. Optional companions have the fallback stated by the route. A terminal or document task does not depend on the web stack. Source and license limits are in [CREDITS.md](CREDITS.md).
 
 ## Resolve overlaps
 
-- The request, accessibility needs, functional correctness, and project constraints bound every stage. When a pinned visual choice creates an access barrier, preserve its intent with an accessible treatment and explain the tradeoff.
-- When a companion skill's default conflicts with swag's design principles, the principles win. Choose patterns that keep content visible and labels complete instead of defaults that cover content or truncate text.
-- Frontend-design selects the visual direction. Impeccable improves its execution and may expose a mismatch with the brief; revise the brief explicitly before changing direction.
-- Apply eased transitions to controls' interactive state changes when animate's gate allows motion. Keep decorative hover effects off ordinary cards. Frontend-design governs the single orchestrated entrance or ambient moment.
-- Animate owns the motion gate, implementation, and safeguards, including reduced-motion support. Its exclusions for keyboard-triggered and frequently repeated actions remain binding. Route impeccable's motion suggestions through it.
-- Web-design-guidelines checks web behavior and access. Its review does not select a replacement aesthetic. Fix a finding in the owning stage, then rerun the affected downstream checks.
-- Keep the brief's and project's copy conventions when a guideline's style preference conflicts with them. Record the intentional exception; accessibility and behavior findings still need a fix.
-- Carry existing authorization through the workflow. Companion greetings, menus, and optional follow-up questions do not restart a settled brief. Preserve host restrictions on delegation; when independent critique assessments are prohibited, run them sequentially and disclose the reduced independence. Report unavailable tools and skipped checks as limits of the result.
-
-## Design principles
-
-Apply these principles where the target has the corresponding content or interaction. Keep the main view calm even when the underlying content is complex.
-
-- Show secondary detail only when an item is highlighted or selected. Disclose long lists progressively, with a clear way to reach the complete content.
-- Keep details accessible without covering the content they explain. Identify the highlighted item, organize its details for scanning, and omit empty presentation fields.
-- Show quiet, concise interaction guidance on the page. Adapt it to the available space and input method. Provide equivalent ways to act with a pointer, keyboard, and touch.
-- Keep transient highlight distinct from deliberate, persistent selection. Selection must be easy to reverse, move, and clear. Dragging must never accidentally select an item.
-- Fit large visual spaces to the viewport initially and adapt when it changes. Let people pan and zoom across the whole space, keep navigation centered on the user's point of interest, and preserve crisp text as scale changes.
-- Let content determine the space it needs. Keep full names and labels readable without truncation, clipping, or overlap.
-- Represent data faithfully. Preserve exact types and values, identify unknowns explicitly, and make the full set of allowed discrete values available when inspected.
-- Explain every visual encoding in a plain-language legend. Meaning must remain understandable beyond color alone.
-- Give connections and direction indicators enough space to read clearly. Endpoints must remain distinct from bends, labels, and neighboring content.
-- Name each page for its actual content and purpose.
+- The request, accessibility, functional correctness, data truth, and format requirements bound every route. Preserve a pinned visual intent with an accessible treatment when needed and explain the tradeoff.
+- When a companion's default conflicts with swag's principles, the principles win. Choose patterns that keep content visible and labels complete. Surface guidance adapts the principles to the medium; it does not waive them.
+- Keep the brief's and project's copy conventions when a companion's style preference conflicts with them. Record an intentional exception, and fix access or behavior defects.
+- Carry settled choices and authorization through handoffs. Companion greetings, menus, and optional questions do not restart the brief. Preserve host restrictions on delegation and disclose any reduced independence in a review.
 
 ## Finish with evidence
 
-Return the implemented result or, for review-only work, prioritized findings with source locations. Briefly state the design direction, the outcome of all four stages, the motion decision, and any unresolved issue. Include before and after screenshots when available, plus the viewport sizes and interaction checks performed. Verify applicable design principles against the rendered result and its real content and interactions. Claim completion only for checks actually run. A screenshot proves appearance at that state; exercise the primary action, keyboard path, responsive layout, and reduced-motion behavior separately.
+Inspect the actual result in its delivery medium using the route's checks. Verify the applicable principles against real content and states. For mixed artifacts, check the combined result as well as its parts. Report the visual direction, selected routes, companion outcomes, and unresolved issues. Include rendered comparisons or captures where available and say which checks actually ran. A screenshot proves appearance at that state; interaction, data accuracy, export fidelity, and accessibility need their own checks.

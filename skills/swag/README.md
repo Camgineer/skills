@@ -10,14 +10,14 @@ Web work follows frontend-design, impeccable, animate, then web-design-guideline
 
 ## Install
 
-Copy swag into the harness directories in use. Its surface guidance is included. The web route requires these separately installed companions, which retain their own licenses:
+The web route requires these separately installed companions, which retain their own licenses:
 
 - `frontend-design`
 - `impeccable`
 - `animate`
 - `web-design-guidelines`
 
-Other routes do not require the web stack. Charts use an installed `dataviz` skill when the host provides one, with chart guidance as the fallback. Format-specific authoring tools remain responsible for creating and exporting their files. Sources and license limits are in [CREDITS.md](CREDITS.md).
+Other routes do not require the web stack. Charts use an installed `dataviz` companion when the host provides one, with chart guidance as the fallback. Format-specific authoring tools remain responsible for creating and exporting their files. Sources and license limits are in [CREDITS.md](CREDITS.md).
 
 From the repository root, copy the skill into the harness directories in use:
 
@@ -36,8 +36,10 @@ cp -R skills/swag ~/.agents/skills/
 /swag Review the diagram, slide deck, and charts without changing them.
 ```
 
-Swag chooses by purpose and medium. An HTML email uses the email route; a dashboard chart uses chart and web guidance together. A missing required dependency stops only its route before edits. The final report names incomplete checks, including an unavailable renderer or current web guidelines.
+Swag chooses by purpose and medium. An HTML email uses the email route; a dashboard chart uses chart and web guidance together. A missing required companion stops only its route before edits. The final report names incomplete checks, including an unavailable renderer or current web guidelines.
 
 ## Sample
 
 [The web sample](examples/README.md) includes a small workshop page, before and after screenshots, and the checks performed. It demonstrates the web workflow rather than every surface. Serve the example directory with any static server to inspect both versions.
+
+[The terminal sample](examples/terminal/README.md) reformats real repository history for narrow and wide terminals, with before and after captures and plain-output checks.

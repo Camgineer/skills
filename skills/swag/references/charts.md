@@ -1,6 +1,6 @@
 # Charts
 
-Identify the audience's question, source data, units, and intended comparison before selecting a chart. Use the runtime's installed `dataviz` skill when present. Read that copy and its applicable references before choosing encodings or writing chart code. Preserve its author, source, and license information when crediting the work. This is an optional runtime dependency; swag does not select or install a public package merely because it shares that name.
+Identify the audience's question, source data, units, and intended comparison before selecting a chart. Use the runtime's installed `dataviz` companion when present. Read that copy and its applicable references before choosing encodings or writing chart code. Preserve its author, source, and license information when crediting the work. This is an optional runtime companion; swag does not select or install a public package merely because it shares that name.
 
 If dataviz is unavailable, say so and apply the chart principles here with the appropriate plotting or authoring tool. Its absence does not block an otherwise supported chart task. Do not claim that dataviz ran.
 

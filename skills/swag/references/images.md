@@ -1,6 +1,6 @@
 # Generated images
 
-Define the intended use, subject, composition, visual hierarchy, palette, and output frame before generation. Respect supplied references and preserve required identity, wording, and other invariants during edits. Use the host's image-generation specialist or tool for a raster deliverable.
+Define the intended use, subject, composition, visual hierarchy, palette, and output frame before generation. Respect supplied references and preserve required identity, wording, and other invariants during edits. Use the host's image-generation companion or tool for a raster deliverable.
 
 Let imagery carry the subject rather than substitute generic ornament. Keep the result coherent with the artifact that will use it. Compose for the final crop, display size, and background, including transparency when requested.
 

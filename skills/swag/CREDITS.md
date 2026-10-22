@@ -4,6 +4,8 @@ Swag's shared principles and surface guidance are original work under the [Apach
 
 | Skill | Author | Source | License and reuse |
 |---|---|---|---|
+| simple-as-prose | Alex Hormozi, @Anthony-Lionetti, @Camgineer, as credited by the companion | [Skill in this repository](https://github.com/Camgineer/skills/tree/main/skills/simple-as-prose) | [MIT](https://github.com/Camgineer/skills/blob/main/skills/simple-as-prose/LICENSE). Allows copying and adaptation with the copyright and permission notice. Swag references it by name and copies no instruction text. |
+| writing-for-agents | Matt Pocock | [Official skill](https://github.com/mattpocock/skills/tree/main/skills/productivity/writing-for-agents) | [MIT](https://github.com/mattpocock/skills/blob/main/LICENSE). Allows copying and adaptation with the copyright and permission notice. Swag references it by name and copies no instruction text. |
 | frontend-design | Anthropic | [Official skill](https://github.com/anthropics/skills/tree/main/skills/frontend-design) | [Apache-2.0](https://github.com/anthropics/skills/blob/main/skills/frontend-design/LICENSE.txt). Allows copying and adaptation subject to its notice and license terms. Swag copies no instruction text. |
 | impeccable | Paul Bakaus | [Official repository](https://github.com/pbakaus/impeccable) | [Apache-2.0](https://github.com/pbakaus/impeccable/blob/main/LICENSE). Allows copying and adaptation subject to its notice and license terms. Swag copies no instruction text. |
 | animate | Emil Kowalski | [Official skill](https://github.com/emilkowalski/skills/tree/main/skills/animate) | [MIT](https://github.com/emilkowalski/skills/blob/main/LICENSE). Allows copying and adaptation with the copyright and permission notice. Swag copies no instruction text. |
@@ -14,4 +16,4 @@ For a host-provided dataviz companion, preserve its author, canonical source, an
 
 The web-design-guidelines skill fetches a separate resource, [Web Interface Guidelines](https://github.com/vercel-labs/web-interface-guidelines), by Vercel Labs. That resource has an [MIT license](https://github.com/vercel-labs/web-interface-guidelines/blob/main/LICENSE). Its license is distinct from the skill's missing license. Swag does not bundle that resource.
 
-The web companions' upstream licensing and provenance were checked on October 22, 2026.
+The writing and web companions' source and license references were checked on October 22, 2026.

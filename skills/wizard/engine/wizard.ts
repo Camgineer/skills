@@ -20,7 +20,9 @@ export async function wizard(root: string, scope: string): Promise<void> {
   const interruption = createInterruption();
   const terminal = createTerminal(interruption);
   const { screen, output } = terminal;
+
   process.on('SIGINT', interruption.interrupt);
+
   let ran = false;
   let inputs: Record<string, InputValue> = {};
   let chosen: DiscoveredCommand | undefined;
@@ -32,11 +34,18 @@ export async function wizard(root: string, scope: string): Promise<void> {
     terminal.showStep(chosen.definition.name);
     ran = true;
     const command = chosen;
-    const result = command.definition.interactive
-      ? await runInWizard(root, command, inputs, interruption, terminal)
-      : await interruption.runChild(() => terminal.withProgress(
-        () => executeCommand(root, command, inputs, interruption.signal),
-      ));
+    const runsInProcess = command.definition.interactive === true;
+    let result: Execution;
+
+    if (runsInProcess) {
+      result = await runInWizard(root, command, inputs, interruption, terminal);
+    } else {
+      result = await interruption.runChild(async () => {
+        return terminal.withProgress(() => {
+          return executeCommand(root, command, inputs, interruption.signal);
+        });
+      });
+    }
 
     if (result.output) clack.log.message(result.output, screen);
     if (result.code === cancelledExitCode) throw new Cancelled();
@@ -67,6 +76,7 @@ export async function wizard(root: string, scope: string): Promise<void> {
       output.write(`${rawCommand(attemptedCommand, inputs)}\n`);
     }
     process.removeListener('SIGINT', interruption.interrupt);
+
     interruption.dispose();
   }
 }

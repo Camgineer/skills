@@ -15,11 +15,13 @@ export async function signIn(email: string, { signal, terminal }: CommandContext
 
   terminal.showStep('Check your email');
   terminal.info(`Example inbox for ${email}: your code is ${code}.`);
+
   const typed = await terminal.password('Enter the code (hidden)', (value) => {
     const wellFormed = new RegExp(`^\\d{${codeDigits}}$`).test(value ?? '');
 
     if (!wellFormed) return `Enter the ${codeDigits}-digit code.`;
   });
+
   const matchesCode = typed === code;
 
   if (!matchesCode) throw new Error('That code does not match. Run sign-in again for a new code.');

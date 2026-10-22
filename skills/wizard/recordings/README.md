@@ -11,7 +11,7 @@
 | [Light](light.cast) | 80 columns, light accents | Soft accents without a forced foreground or background. |
 | [History and reduced motion](static.cast) | 28 columns | History remains between steps; command progress uses a static status line. Keyboard prompts still redraw. |
 
-Only fake secrets were entered. Their plaintext is absent from every recording. All successful interactive flows returned zero; the deliberate command error returned a nonzero status. The engine returns 130 on cancellation. Make preserves failure and can append its own error footer; shell chains stop.
+Only fake secrets were entered. Declaration-secret plaintext is absent from the original recordings listed above. All successful interactive flows returned zero; the deliberate command error returned a nonzero status. The engine returns 130 on cancellation. Make preserves failure and can append its own error footer; shell chains stop.
 
 The design follows [swag's terminal route](../../swag/references/terminal.md). The quiet command desk uses terminal-owned neutral colors, complete labels, and one focused task per screen. Verification covers narrow and wide terminals, light and dark accents, `NO_COLOR`, redirected output, and cancellation. Navigation guidance stays inside its frame at 28 columns. Progress communicates activity without a completion percentage, and reduced motion uses a static status line.
 
@@ -35,6 +35,6 @@ npm install --prefix node_modules/.proof --no-package-lock --no-save @xterm/head
 node recordings/record-interactive.mjs
 ```
 
-The recorder uses its own processes and no browser. Its fixtures are removed after capture. The interrupt recordings print `stty -a` after the command so terminal restoration is visible. These captures establish POSIX behavior; they do not establish Windows terminal or screen-reader behavior.
+The recorder uses its own processes and no browser. Its command fixtures are TypeScript modules checked with the engine. The interrupt recordings print `stty -a` after the command so terminal restoration is visible. These captures establish POSIX behavior; they do not establish Windows terminal or screen-reader behavior.
 
 The sign-in flow also passes local PTY checks at 28 columns with dark accents, 80 columns with light accents, 40 columns with `NO_COLOR=1`, and 28 columns with reduced motion. Each completes successfully; no-color output contains no ANSI color codes, and reduced-motion output contains no animated spinner frames. These checks inspect the real output and do not change the GIF palette.

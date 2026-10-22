@@ -125,7 +125,9 @@ export function createTerminal(interruption: Interruption) {
         process.stdin.removeListener('data', readCancelKeys);
         process.stdin.setRawMode(wasRaw ?? false);
 
-        if (wasFlowing !== true) process.stdin.pause();
+        const restorePausedInput = wasFlowing !== true;
+
+        if (restorePausedInput) process.stdin.pause();
       }
     }
 
@@ -152,6 +154,7 @@ export function createTerminal(interruption: Interruption) {
       }
 
       signal.addEventListener('abort', stopIndicator, { once: true });
+
       const outcome = await operation();
 
       const cancelled = signal.aborted;
@@ -188,7 +191,20 @@ export function createTerminal(interruption: Interruption) {
     clack.log.info(message, screen);
   }
 
-  return { output, screen, prompts, showStep, answer, select, showHelp, withProgress, text, password, confirm, info };
+  return {
+    output,
+    screen,
+    prompts,
+    showStep,
+    answer,
+    select,
+    showHelp,
+    withProgress,
+    text,
+    password,
+    confirm,
+    info,
+  };
 }
 
 export type Terminal = ReturnType<typeof createTerminal>;

@@ -21,8 +21,13 @@ export function createInterruption() {
 
     cleanups.clear();
 
-    if (process.stdin.isTTY) process.stdin.setRawMode(wasRaw ?? false);
-    if (wasFlowing === true) process.stdin.resume();
+    const supportsRawMode = process.stdin.isTTY;
+
+    if (supportsRawMode) process.stdin.setRawMode(wasRaw ?? false);
+
+    const inputWasFlowing = wasFlowing === true;
+
+    if (inputWasFlowing) process.stdin.resume();
     else process.stdin.pause();
   }
 
@@ -33,7 +38,9 @@ export function createInterruption() {
     if (forceExit) {
       dispose();
 
-      if (process.stdout.isTTY) process.stdout.write('\r\x1b[2K\x1b[?25h');
+      const supportsTerminalControl = process.stdout.isTTY;
+
+      if (supportsTerminalControl) process.stdout.write('\r\x1b[2K\x1b[?25h');
 
       process.stderr.write('Stopped. Review any effects before retrying.\n');
       process.exit(cancelledExitCode);
@@ -82,5 +89,12 @@ export function createInterruption() {
     }
   }
 
-  return { signal, interrupt, runInProcess, runChild, onCleanup, dispose };
+  return {
+    signal,
+    interrupt,
+    runInProcess,
+    runChild,
+    onCleanup,
+    dispose,
+  };
 }

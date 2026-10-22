@@ -106,6 +106,7 @@ export function validateDefinition(candidate: unknown): asserts candidate is Com
   if (invalidInteractive) {
     throw new Error('interactive must be a boolean.');
   }
+
   if ('irreversible' in candidate && !isLabel(candidate.irreversible)) {
     throw new Error('irreversible must describe the consequence.');
   }

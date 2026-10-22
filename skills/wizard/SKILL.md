@@ -120,7 +120,9 @@ async run(inputs, { signal, terminal }) {
   await requestCode(String(inputs.EMAIL), signal);
 
   const code = await terminal.password('Enter the code', value => {
-    if (!value?.trim()) return 'Enter the code from your email.';
+    const missingCode = !value?.trim();
+
+    if (missingCode) return 'Enter the code from your email.';
   });
 
   return terminal.withProgress(() => verifyCode(code, signal));

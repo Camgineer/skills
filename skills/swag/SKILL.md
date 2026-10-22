@@ -25,7 +25,9 @@ Find all four companion skills before editing. Prefer the runtime's named skill 
 
 Read and apply the installed `frontend-design` skill to this target and brief. Set the visual direction before implementation. For refinement, describe the incumbent identity and the changes that fit it. For new work or redesign, choose a direction grounded in the subject and audience.
 
-Keep a coherent existing palette unless the request opens color for exploration. When color is open, suggest a few directions with representative swatches or tokens, semantic roles, and a short reason each suits the subject. Favor soft pastel accents on neutral surfaces when the brief leaves that choice open, and make neighboring groups clearly distinct. Offer the user a choice, recommend one, and continue within the existing authorization; ask only when a brand decision remains unresolved. Established palettes and the project's design system are useful starting points. Read their actual tokens from the installed package or official source instead of approximating them. A custom palette is equally valid when it serves the brief; explain its rationale and check contrast in every used state. Name the chosen source or mark the palette as custom in the handoff.
+Keep a coherent existing palette unless the request opens color for exploration. When choosing a palette, use the one the user named. Otherwise, pick soft pastel accents on neutral surfaces and make neighboring groups clearly distinct. Avoid the default blue/teal "AI" look unless the user or brand asks for it. Pass swag's soft-palette preference to frontend-design as part of the brief. Say which palette is chosen, offer alternatives with swatches or tokens and their semantic roles, and proceed without waiting for a choice. Switch if the user chooses another.
+
+Established palettes and the project's design system are useful starting points. Read their actual tokens from the installed package or official source instead of approximating them. A custom palette is equally valid when it serves the brief; explain its rationale and check contrast in every used state. Name the chosen source or mark the palette as custom in the handoff.
 
 Complete this stage with a compact design brief covering the primary action, layout, typography, palette, and the element that gives this work its character. Check that each choice follows the request. Carry this same brief into the remaining stages.
 
@@ -56,6 +58,7 @@ If the guidelines cannot be fetched, report that this stage is incomplete. Use a
 ## Resolve overlaps
 
 - The request, accessibility needs, functional correctness, and project constraints bound every stage. When a pinned visual choice creates an access barrier, preserve its intent with an accessible treatment and explain the tradeoff.
+- When a companion skill's default conflicts with swag's design principles, the principles win. Choose patterns that keep content visible and labels complete instead of defaults that cover content or truncate text.
 - Frontend-design selects the visual direction. Impeccable improves its execution and may expose a mismatch with the brief; revise the brief explicitly before changing direction.
 - Apply eased transitions to controls' interactive state changes when animate's gate allows motion. Keep decorative hover effects off ordinary cards. Frontend-design governs the single orchestrated entrance or ambient moment.
 - Animate owns the motion gate, implementation, and safeguards, including reduced-motion support. Its exclusions for keyboard-triggered and frequently repeated actions remain binding. Route impeccable's motion suggestions through it.
@@ -67,11 +70,11 @@ If the guidelines cannot be fetched, report that this stage is incomplete. Use a
 
 Apply these principles where the target has the corresponding content or interaction. Keep the main view calm even when the underlying content is complex.
 
-- Reveal secondary detail when an item is highlighted or selected. Disclose long lists progressively, with a clear way to reach the complete content.
+- Show secondary detail only when an item is highlighted or selected. Disclose long lists progressively, with a clear way to reach the complete content.
 - Keep details accessible without covering the content they explain. Identify the highlighted item, organize its details for scanning, and omit empty presentation fields.
-- Make interactions discoverable through quiet, concise guidance that adapts to the available space and input method. Provide equivalent ways to act with a pointer, keyboard, and touch.
+- Show quiet, concise interaction guidance on the page. Adapt it to the available space and input method. Provide equivalent ways to act with a pointer, keyboard, and touch.
 - Keep transient highlight distinct from deliberate, persistent selection. Selection must be easy to reverse, move, and clear. Dragging must never accidentally select an item.
-- Fit large visual spaces to the viewport initially and adapt when it changes. Make the whole space reachable, keep navigation centered on the user's point of interest, and preserve crisp text as scale changes.
+- Fit large visual spaces to the viewport initially and adapt when it changes. Let people pan and zoom across the whole space, keep navigation centered on the user's point of interest, and preserve crisp text as scale changes.
 - Let content determine the space it needs. Keep full names and labels readable without truncation, clipping, or overlap.
 - Represent data faithfully. Preserve exact types and values, identify unknowns explicitly, and make the full set of allowed discrete values available when inspected.
 - Explain every visual encoding in a plain-language legend. Meaning must remain understandable beyond color alone.

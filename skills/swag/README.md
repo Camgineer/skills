@@ -2,11 +2,11 @@
 
 `/swag` runs four installed design skills as one workflow. It sets the visual direction, suggests palettes, critiques and polishes the interface, adds motion with easing and weight, and checks the result against current web guidelines.
 
-It keeps an existing palette unless color is open for exploration. When it is, swag suggests a few directions. Established palettes are starting points; a custom palette is welcome when it fits the brief and passes contrast checks.
+It keeps an existing palette unless color is open for exploration. When choosing a palette, swag uses the one named in the request or picks a soft palette, names it, and offers alternatives without waiting for a choice. Established palettes are starting points; a custom palette is welcome when it fits the brief and passes contrast checks.
 
-The design keeps the main view calm, reveals detail without covering content, and makes interactions discoverable. Content stays readable and data stays exact. Palette suggestions favor soft accents on neutral surfaces when the brief leaves color open.
+The design keeps the main view calm, reveals detail without covering content, and makes interactions discoverable. Content stays readable and data stays exact. Palettes use soft accents on neutral surfaces rather than the default blue/teal "AI" look, unless the request or brand asks for it.
 
-Motion that passes animate's gate gets purposeful easing and weight. Small squash and stretch, follow-through, and responsive settling give eligible interactions presence. Animate's keyboard and frequency exclusions remain binding, and reduced-motion preferences get a gentler treatment.
+Swag adds motion only where animate allows it. Actions triggered by the keyboard and very frequent actions stay still. Small squash and stretch, follow-through, and responsive settling give other interactions easing and weight. Reduced-motion preferences get a gentler treatment.
 
 ## Install
 

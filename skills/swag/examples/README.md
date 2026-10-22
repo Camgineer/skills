@@ -27,7 +27,7 @@ The final detector scan returned one `cramped-padding` warning for the hero's to
 
 ## Motion
 
-Animate's button recipe and motion guidance informed an original implementation. Swag's preference for eased feedback governs the frequency decision. The wheel gets a single 600ms settle on entry. Hover and press use 160ms transitions with the sourced curve `cubic-bezier(0.23, 1, 0.32, 1)`. A press stretches width to 1.02 and compresses height to 0.96, then settles on release. The booking highlight fades over 200ms.
+Animate's button recipe and motion guidance informed an original implementation. The sample demonstrates eased pointer feedback and a single entrance. The wheel gets a 600ms settle on entry. Hover and press use 160ms transitions with the sourced curve `cubic-bezier(0.23, 1, 0.32, 1)`. A press stretches width to 1.02 and compresses height to 0.96, then settles on release. The booking highlight fades over 200ms.
 
 The reduced-motion variant uses a 160ms opacity entrance, removes hover and press transforms, and uses immediate anchor scrolling. Focus remains usable throughout. The small action background also eases between colors; this is an intentional exception to the general preference for transform and opacity. The page needs no animation library.
 

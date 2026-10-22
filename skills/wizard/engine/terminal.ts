@@ -1,5 +1,7 @@
 import * as clack from '@clack/prompts';
 import { Writable } from 'node:stream';
+import { Cancelled } from './interruption.ts';
+import type { Interruption } from './interruption.ts';
 
 // Keep only a few choices visible; Clack scrolls the remaining entries.
 const menuItems = 4;
@@ -11,8 +13,6 @@ const softAccents = {
   light: { current: 97, success: 65, warning: 136 },
   dark: { current: 183, success: 150, warning: 223 },
 };
-
-export class Cancelled extends Error {}
 
 function enabled(setting: string | undefined): boolean {
   return setting !== undefined && setting !== '' && setting !== '0' && setting !== 'false';
@@ -41,10 +41,12 @@ class TerminalOutput extends Writable {
   }
 }
 
-export function createTerminal(controller: AbortController) {
+export type Validate = (value: string | undefined) => string | undefined;
+
+export function createTerminal(interruption: Interruption) {
   const output = new TerminalOutput();
   const screen = { output };
-  const prompts = { output, signal: controller.signal };
+  const prompts = { output, signal: interruption.signal };
 
   function showStep(title: string) {
     if (!enabled(process.env.ACCESSIBLE)) output.write('\x1b[2J\x1b[H');
@@ -53,8 +55,14 @@ export function createTerminal(controller: AbortController) {
 
   async function answer<T>(promise: Promise<T>): Promise<Exclude<T, typeof clack.CANCEL_SYMBOL>> {
     const response = await promise;
-    const cancelled = clack.isCancel(response) || controller.signal.aborted;
+    const cancelledByKey = clack.isCancel(response) && !interruption.signal.aborted;
+
+    if (cancelledByKey) interruption.interrupt();
+
+    const cancelled = interruption.signal.aborted;
+
     if (cancelled) throw new Cancelled();
+
     return response as Exclude<T, typeof clack.CANCEL_SYMBOL>;
   }
 
@@ -76,50 +84,111 @@ export function createTerminal(controller: AbortController) {
   }
 
   async function withProgress<T>(operation: () => Promise<T>): Promise<T> {
-    let spinnerTimer: NodeJS.Timeout | undefined;
-    const frames = ['◒', '◐', '◓', '◑'];
-    let frame = 0;
+    const { signal } = interruption;
+
+    const alreadyCancelled = signal.aborted;
+
+    if (alreadyCancelled) throw new Cancelled();
+
+    const visible = process.stdout.isTTY;
+    const keyboard = visible && process.stdin.isTTY;
     const reducedMotion = enabled(process.env.WIZARD_REDUCED_MOTION);
+    const animated = visible && !reducedMotion;
+    const staticIndicator = visible && reducedMotion;
     const wasRaw = process.stdin.isRaw;
     const wasFlowing = process.stdin.readableFlowing;
-    const cancelKey = (chunk: Buffer | string) => {
+    const frames = ['◒', '◐', '◓', '◑'];
+    let frame = 0;
+    let spinnerTimer: NodeJS.Timeout | undefined;
+
+    function readCancelKeys(chunk: Buffer | string) {
       const keys = Buffer.isBuffer(chunk) ? chunk.toString('utf8') : chunk;
-      if (keys.includes('\x03') || keys === '\x1b') controller.abort();
-    };
-    const spinner = {
-      start: () => {
-        // Handle cancel keys here so Make's foreground process group stays alive for cleanup.
+
+      for (const key of keys) {
+        const cancelKey = key === '\x03' || key === '\x1b' && keys.length === 1;
+
+        if (cancelKey) interruption.interrupt();
+      }
+    }
+
+    function stopIndicator() {
+      clearInterval(spinnerTimer);
+
+      if (animated) output.write('\r\x1b[2K');
+    }
+
+    function finish() {
+      stopIndicator();
+      signal.removeEventListener('abort', stopIndicator);
+
+      if (keyboard) {
+        process.stdin.removeListener('data', readCancelKeys);
+        process.stdin.setRawMode(wasRaw ?? false);
+
+        if (wasFlowing !== true) process.stdin.pause();
+      }
+    }
+
+    const removeCleanup = interruption.onCleanup(finish);
+
+    try {
+      // Raw mode keeps Make alive for cleanup and catches repeated Ctrl-C keys after abort.
+      if (keyboard) {
         process.stdin.setRawMode(true);
-        process.stdin.on('data', cancelKey);
+        process.stdin.on('data', readCancelKeys);
         process.stdin.resume();
-        if (reducedMotion) {
-          clack.log.step('Running', screen);
-          return;
-        }
+      }
+
+      if (staticIndicator) clack.log.step('Running', screen);
+
+      if (animated) {
         const draw = () => {
           output.write(`\r\x1b[2K\x1b[35m${frames[frame]}\x1b[39m  Running`);
           frame = (frame + 1) % frames.length;
         };
+
         draw();
         spinnerTimer = setInterval(draw, spinnerFrameMs);
-      },
-      finish: () => {
-        process.stdin.removeListener('data', cancelKey);
-        process.stdin.setRawMode(wasRaw);
-        if (wasFlowing !== true) process.stdin.pause();
-        clearInterval(spinnerTimer);
-        if (!reducedMotion) output.write('\r\x1b[2K');
-      },
-    };
-    try {
-      spinner.start();
-      return await operation();
+      }
+
+      signal.addEventListener('abort', stopIndicator, { once: true });
+      const outcome = await operation();
+
+      const cancelled = signal.aborted;
+
+      if (cancelled) throw new Cancelled();
+
+      return outcome;
     } finally {
-      spinner.finish();
+      finish();
+      removeCleanup();
     }
   }
 
-  return { output, screen, prompts, showStep, answer, select, showHelp, withProgress };
+  function text(message: string, validate?: Validate) {
+    return answer(clack.text({ ...prompts, message, validate }));
+  }
+
+  function password(message: string, validate?: Validate) {
+    const hiddenValidation: Validate = value => {
+      const explanation = validate?.(value);
+      const hasSecret = value !== undefined && value.length > 0;
+
+      return hasSecret ? explanation?.replaceAll(value, '[hidden]') : explanation;
+    };
+
+    return answer(clack.password({ ...prompts, message, validate: hiddenValidation }));
+  }
+
+  function confirm(message: string, options: { initialValue: boolean }) {
+    return answer(clack.confirm({ ...prompts, message, initialValue: options.initialValue }));
+  }
+
+  function info(message: string) {
+    clack.log.info(message, screen);
+  }
+
+  return { output, screen, prompts, showStep, answer, select, showHelp, withProgress, text, password, confirm, info };
 }
 
 export type Terminal = ReturnType<typeof createTerminal>;

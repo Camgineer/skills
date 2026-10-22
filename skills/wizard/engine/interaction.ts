@@ -2,7 +2,7 @@ import * as clack from '@clack/prompts';
 import { parseInput } from './command.ts';
 import type { Input, InputValue } from './command.ts';
 import type { DiscoveredCommand } from './discovery.ts';
-import { Cancelled } from './terminal.ts';
+import { Cancelled } from './interruption.ts';
 import type { Terminal } from './terminal.ts';
 
 export async function chooseCommand(commands: DiscoveredCommand[], scope: string, terminal: Terminal): Promise<DiscoveredCommand> {

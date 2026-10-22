@@ -1,5 +1,11 @@
 import { stripVTControlCharacters } from 'node:util';
 import { createRedactor, secretMask } from './redaction.ts';
+import { Cancelled, cancelledExitCode, createInterruption } from './interruption.ts';
+import { createTerminal } from './terminal.ts';
+import type { Terminal } from './terminal.ts';
+
+export { Cancelled, cancelledExitCode } from './interruption.ts';
+export type { Terminal } from './terminal.ts';
 
 export type InputValue = string | number | boolean;
 type InputBase = {
@@ -15,16 +21,22 @@ export type Input = InputBase & (
   | { kind: 'confirm'; default?: boolean }
   | { kind: 'choice'; options: readonly { value: string; label: string }[]; default?: string }
 );
+export type CommandContext = {
+  root: string;
+  wizard?: true;
+  signal: AbortSignal;
+  terminal: Terminal;
+};
 export type Command = {
   name: string;
   help: string;
   inputs: readonly Input[];
   stages?: readonly { name: string; help: string }[];
   irreversible?: string;
-  run: (inputs: Readonly<Record<string, InputValue>>, context: { root: string }) => string | Promise<string>;
+  interactive?: boolean;
+  run: (inputs: Readonly<Record<string, InputValue>>, context: CommandContext) => string | Promise<string>;
 };
 
-export const cancelledExitCode = 130;
 const terminalControlCharacters = /[\x00-\x08\x0b-\x1f\x7f]/g;
 
 export function secretInputs(definition: Command): readonly Input[] {
@@ -89,6 +101,11 @@ export function validateDefinition(candidate: unknown): asserts candidate is Com
     }
   }
 
+  const invalidInteractive = 'interactive' in candidate && typeof candidate.interactive !== 'boolean';
+
+  if (invalidInteractive) {
+    throw new Error('interactive must be a boolean.');
+  }
   if ('irreversible' in candidate && !isLabel(candidate.irreversible)) {
     throw new Error('irreversible must describe the consequence.');
   }
@@ -134,7 +151,14 @@ export function safeOutput(message: string, secrets: readonly string[] = []): st
 }
 
 export async function runCommand(definition: Command): Promise<void> {
+  const interruption = createInterruption();
+  const terminal = createTerminal(interruption);
+  const catchesInterrupts = definition.interactive === true;
+
+  if (catchesInterrupts) process.on('SIGINT', interruption.interrupt);
+
   let secrets: string[] = [];
+
   try {
     validateDefinition(definition);
     secrets = secretInputs(definition).map(input => process.env[input.name] || String(input.default ?? ''));
@@ -143,12 +167,23 @@ export async function runCommand(definition: Command): Promise<void> {
     if (definition.irreversible && process.env.CONFIRM !== 'true') {
       throw new Error('This action cannot be undone. Set CONFIRM=true after reviewing its consequence.');
     }
-    const result = await definition.run(inputs, { root: process.cwd() });
-    if (typeof result !== 'string') throw new Error('Command run must return a result string.');
+
+    const context = { root: process.cwd(), signal: interruption.signal, terminal };
+    const result = await interruption.runInProcess(() => definition.run(inputs, context));
+
+    const validResult = typeof result === 'string';
+
+    if (!validResult) throw new Error('Command run must return a result string.');
+
     process.stdout.write(`${safeOutput(result, secrets)}\n`);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Command failed.';
+
     process.stderr.write(`${safeOutput(message, secrets)}\n`);
-    process.exitCode = 1;
+    process.exitCode = error instanceof Cancelled ? cancelledExitCode : 1;
+  } finally {
+    process.removeListener('SIGINT', interruption.interrupt);
+
+    if (catchesInterrupts) interruption.dispose();
   }
 }

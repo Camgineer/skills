@@ -1,5 +1,5 @@
 interface:
   display_name: "Swag"
-  short_description: "Design web interfaces through direction, polish, motion, and accessibility"
+  short_description: "Shape the look and feel of interfaces, output, documents, and visuals"
 policy:
-  allow_implicit_invocation: false
+  allow_implicit_invocation: true

@@ -1,0 +1,5 @@
+interface:
+  display_name: "Wizard"
+  short_description: "Give every script a raw target, assisted terminal flow, and command skill"
+policy:
+  allow_implicit_invocation: true

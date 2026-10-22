@@ -7,6 +7,7 @@ Agent skills by Camgineer. Each folder under `skills/` is one installable skill.
 | [coordinator](skills/coordinator/SKILL.md) | Acts as a project's chief of staff: triages requests, coordinates focused work, preserves context and follows results through delivery. Invoke it explicitly. |
 | [simple-as-prose](skills/simple-as-prose/SKILL.md) | Writes and revises human-facing prose so the reader gets the point and knows what to do next. Install independently. |
 | [swag](skills/swag/SKILL.md) | Shapes look and feel across interfaces, terminal output, documents, diagrams, slides, emails, images, and charts. Applies shared principles and routes to the medium's guidance. Web work uses four companion skills. |
+| [wizard](skills/wizard/SKILL.md) | Gives every script a raw Make target, an assisted terminal wizard, and a command skill, with one shared execution path. |
 
 ## Coordinator
 

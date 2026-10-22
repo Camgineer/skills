@@ -1,0 +1,145 @@
+---
+name: wizard
+description: "Give every repository script a raw Make target, an assisted terminal wizard, and a command skill. Use when wiring scripts into Make, adding commands or namespaces, or improving terminal prompts and command discovery."
+license: Apache-2.0
+---
+
+# Wizard
+
+Install one engine and give each command one declaration. Raw Make targets, interactive wizards, and command skills all reach the same command code. This applies to every script operation, including queries, reports, maintenance, builds, and setup.
+
+Read [README.md](README.md) for the runnable example and terminal settings. Read [GLOSSARY.md](GLOSSARY.md) when distinguishing commands, namespaces, inputs, and human stages.
+
+## Wire a repository
+
+1. Inspect the repository's scripts, Make targets, package manager, and skill directory. Inventory every script operation and map each to a command path. Preserve the existing process logic behind the command's `run` function. Each operation has a raw target, wizard entry, and command skill before this step is complete.
+2. Install this entire folder as `.agents/skills/wizard/` and keep the engine there. Install its runtime dependencies with `npm ci --omit=dev --prefix .agents/skills/wizard`. Ignore `.agents/skills/wizard/node_modules/`. Commit or reproducibly install the skill folder and its lockfile. Updating the installed skill upgrades the shared engine; keep repository-specific logic under `scripts/`.
+3. Require Node 24 and ESM (`"type": "module"` in the repository's package manifest). Add this package import so commands at every depth use the same path:
+
+   ```json
+   {
+     "imports": { "#wizard": "./.agents/skills/wizard/engine/command.ts" }
+   }
+   ```
+
+4. Add these Make rules. Merge the declarations with existing conventions. The command list comes from the filesystem. Keep the raw rule a **static pattern rule** with the discovered targets before `%: scripts/%/run.ts`. A bare implicit `%` rule resolves nested paths incorrectly.
+
+```make
+.DEFAULT_GOAL := wizard
+WIZARD_ENGINE := .agents/skills/wizard/engine
+COMMANDS := $(shell node $(WIZARD_ENGINE)/cli.ts list-commands)
+.EXPORT_ALL_VARIABLES:
+.PHONY: wizard check-commands $(COMMANDS)
+
+wizard:
+	@node $(WIZARD_ENGINE)/cli.ts wizard || test $$? -eq 130
+
+%/wizard:
+	@node $(WIZARD_ENGINE)/cli.ts wizard $* || test $$? -eq 130
+
+$(COMMANDS): %: scripts/%/run.ts
+	@node $<
+
+check-commands:
+	@node $(WIZARD_ENGINE)/cli.ts check-commands
+```
+
+   Recipes use literal tab indentation. Variables reach Node through the environment; keep input expansions such as `$(SQL)` out of recipe text. Paths contain lowercase kebab-case segments. Reserve the segment `wizard` and the root path `check-commands`. Every folder containing either entry file must contain both entry files. Namespace folders contain descendants and need no declaration.
+
+5. Add the TypeScript 7 compiler (`@typescript/native-preview`, pinned to the version in this skill's package manifest) and Node 24 types to the repository's development dependencies. Typecheck the consuming scripts and installed engine together. Exclude `.agents/skills/wizard/engine/**/*.test.ts` from the consuming repository typecheck; the skill runs its tests with its own development dependencies. Use `strict`, `module: "NodeNext"`, `noEmit`, `allowImportingTsExtensions`, `verbatimModuleSyntax`, and `erasableSyntaxOnly`. Node runs `.ts` files directly. Use erasable syntax and explicit `.ts` import extensions.
+
+Complete wiring when `make check-commands`, the repository typecheck, a raw command, `make wizard`, and a nested namespace wizard pass. Exercise cancellation and a fake secret in the installed layout.
+
+## Add a command
+
+Create `scripts/<path>/command.ts` and a thin `run.ts`. Export `definition` from the declaration. Keep module initialization and all transitive imports free of side effects; discovery imports declarations. Load costly dependencies inside `run`.
+
+```typescript
+// scripts/db/read/command.ts
+import type { Command } from '#wizard';
+
+export const definition = {
+  name: 'Read records',
+  help: 'Run a read-only query.',
+  inputs: [{
+    name: 'SQL',
+    prompt: 'Which query should run?',
+    help: 'Enter a read-only SQL statement.',
+    required: true,
+    secret: false,
+    kind: 'text',
+    default: 'SELECT 1',
+  }],
+  async run(inputs, { root }) {
+    const { readRecords } = await import('./read-records.ts');
+    return readRecords(String(inputs.SQL), root);
+  },
+} satisfies Command;
+```
+
+```typescript
+// scripts/db/read/run.ts
+import { runCommand } from '#wizard';
+import { definition } from './command.ts';
+
+await runCommand(definition);
+```
+
+`run` receives validated inputs and the repository root, and returns a result string. Perform all command work there. Return output instead of printing it. Run subprocesses with closed stdin and captured output so the wizard owns interaction. Await subprocess completion and keep descendants in the command process group.
+
+Each input declares `name`, `prompt`, `help`, `required`, `secret`, and `kind`. Names are uppercase Make variable names. The checker rejects execution-control names such as `PATH`, `SHELL`, `MAKEFLAGS`, `NODE_OPTIONS`, and `WIZARD_*`. Use a descriptive name such as `ACCOUNT_NAME` rather than an ambient shell name such as `USER`.
+
+| Kind | Value | Optional declaration |
+|---|---|---|
+| `text` | String | `default: 'value'` |
+| `choice` | One declared option value | `options: [{ value: 'safe', label: 'Safe' }]`, `default: 'safe'` |
+| `confirm` | Boolean | `default: false` |
+| `number` | Finite number | `default: 1` |
+
+`choice` requires nonempty, unique options. Defaults must match the kind and allowed choices. Omitted optional inputs yield `''`; choose a default when the command needs a typed value. A required input can have a default. Keep real credentials out of declarations and defaults. `secret: true` uses hidden entry for every kind; its help must explain the expected format or choice values.
+
+Add business validation inside `run`, such as integer bounds or read-only query restrictions. Raw targets and wizards share that validation. An input's `required` flag checks presence; `false` remains a valid confirmation input.
+
+For irreversible actions, set `irreversible` to a precise consequence, including the affected resource. The wizard asks for confirmation with cancel selected. The raw runner requires `CONFIRM=true`; the closing command includes it after confirmation. Human stages run before inputs and execution, one at a time:
+
+```typescript
+stages: [{ name: 'Review the resource', help: 'Finish work that needs the selected resource before removing it.' }],
+irreversible: 'This permanently removes the selected resource.',
+```
+
+Stages describe work only a human can do, and pause for explicit completion. Raw operators and agents complete these prerequisites themselves. Split a process into commands when human work must occur between automated operations. State changes after execution begins may survive cancellation.
+
+## Name and wire the command skill
+
+Name each command's skill after its script path in kebab-case. For example, `scripts/db/read` maps to `make db/read` and skill `db-read`. `scripts/check-names` maps to `make check-names` and skill `check-names`. The checker rejects path pairs that flatten to the same skill name.
+
+Create `.agents/skills/<kebab-path>/SKILL.md`. Its description names the operation and when an agent should use it. Its body tells the agent to read the command declaration for inputs and consequences, complete human prerequisites, and call the raw Make target with named variables. Link the declaration relative to the skill. Include a concrete raw invocation and its success condition. Keep command behavior and input reference in the declaration.
+
+Use `make db/read SQL='SELECT 1'`. Named variables preserve `=` inside values. Shell quoting protects shell metacharacters; Make also expands `$`, so a literal dollar needs `$$` inside a single-quoted assignment. The wizard handles both quoting layers. Wizard secrets travel through the environment, and the closing command masks their values. Replace `[hidden]` before replay; the runner rejects that sentinel.
+
+## Preserve the terminal experience
+
+- One focused step per screen, complete labels, quiet keyboard guidance, and help on request. Text and number inputs accept `?` for help; choices expose help as an option. Show only the highlighted menu entry's help.
+- Keep foreground and background under the terminal theme's control. Honor `NO_COLOR` and the terminal settings documented in [README.md](README.md).
+- Hide secrets during entry and in returned results, errors, and the closing raw command. Redaction covers exact secret strings; command code must keep transformed secrets out of output and logs.
+- Confirm irreversible actions immediately before execution. Use a spinner for command progress, then show the result and the raw command last. Preserve failure status. Ctrl-C restores the terminal; the engine returns 130 and the Make wrappers treat cancellation as a clean exit; report that effects may have occurred if execution started.
+- Keep command work noninteractive. The engine closes child stdin, drains both output streams, and retains bounded output. Return concise results; commands that produce large artifacts should return their paths.
+
+## Check in CI
+
+`check-commands` validates discovered declarations, paired entry files, input kinds and defaults, reserved names, and command skill name collisions. It imports declarations and never calls `run`. Typechecking remains a separate check.
+
+```yaml
+steps:
+  - uses: actions/checkout@v4
+  - uses: actions/setup-node@v4
+    with:
+      node-version: 24
+      cache: npm
+  - run: npm ci
+  - run: npm ci --omit=dev --prefix .agents/skills/wizard
+  - run: make check-commands
+  - run: npm exec tsgo -- --noEmit
+```
+
+Use the repository's package manager equivalents where needed. Check completion through the raw target, the root and relevant nested wizard paths, and the command skill. Verify errors, secrets, narrow terminals, and cancel before handing off.

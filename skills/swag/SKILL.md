@@ -16,6 +16,7 @@ Reuse the available brief and constraints. Ask only when a missing decision chan
 
 ## Shared design principles
 
+- Write or revise every word on every surface with `simple-as-prose`, including UI copy, labels, buttons, errors, empty states, CLI messages, slide text, email copy, document prose, chart titles, and captions. For agent-facing text, including skills, AGENTS.md, and prompts, also apply `writing-for-agents`. Swag owns the form; these writing companions own the words.
 - Ground the visual direction in the subject and audience. Keep the content hierarchy, type treatment, palette, and composition coherent across the chosen routes.
 - Keep the main view calm and focused. Reveal secondary detail only for the highlighted or selected item on interactive surfaces. Disclose long lists progressively, with a clear way to reach the complete content. In static work, put supporting detail in a clearly connected secondary reading layer so it remains available without overwhelming the main message.
 - Keep details accessible without covering the content they explain. Identify their subject, organize them for scanning, and omit empty presentation fields.
@@ -53,7 +54,7 @@ Choose by the audience's task and delivery medium, not the filename alone. An HT
 
 For another surface, including native applications, apply the shared principles with the host's relevant platform or format companion. Preserve its native conventions and verify in that medium; browser guidance is specific to the web route.
 
-Resolve only the companions needed by the chosen route. Prefer the runtime's named skill locations, then project `.agents/skills` and `.claude/skills`, then their user-level equivalents. Read each selected companion before applying it and resolve supporting files relative to that copy. A missing required companion stops that route before edits. Optional companions have the fallback stated by the route. A terminal or document task does not depend on the web stack. Source and license limits are in [CREDITS.md](CREDITS.md).
+Resolve the shared writing companions before any route writes or revises text, according to the audience rule above. Add the companions needed by the chosen surface route. Prefer the runtime's named skill locations, then project `.agents/skills` and `.claude/skills`, then their user-level equivalents. Read each selected companion before applying it and resolve supporting files relative to that copy. A missing required companion stops that route before edits. Optional companions have the fallback stated by the route. A terminal or document task does not depend on the web stack. Source and license limits are in [CREDITS.md](CREDITS.md).
 
 ## Resolve overlaps
 

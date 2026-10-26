@@ -1,8 +1,11 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
-type Column = { name: string; type: string; pk?: boolean; fk?: boolean; unique?: boolean; values?: string[] };
-type Table = { id: string; group: string; caption: string; columns: Column[] };
+type DesignChange =
+  | { status: "existing"; reuse?: never }
+  | { status: "new" | "changed"; reuse: { checked: string; why: string } };
+type Column = DesignChange & { name: string; type: string; pk?: boolean; fk?: boolean; unique?: boolean; values?: string[] };
+type Table = DesignChange & { id: string; group: string; caption: string; columns: Column[] };
 type Endpoint = { table: string; column: string };
 type Link = { fk: Endpoint; pk: Endpoint; soft?: boolean };
 type Schema = { title: string; subtitle?: string; tables: Table[]; links: Link[] };
@@ -54,6 +57,28 @@ function requireAllowedValues(candidate: unknown, path: string): string[] | unde
   return requireArray(candidate, path).map((value, index) => requireString(value, `${path}[${index}]`));
 }
 
+function requireDesignChange(record: Record<string, unknown>, path: string): DesignChange {
+  const status = record.status === undefined ? "existing" : record.status;
+  const existing = status === "existing";
+  if (existing) {
+    const hasReuse = record.reuse !== undefined;
+    if (hasReuse) throw new Error(`${path}.reuse is only allowed for new or changed elements`);
+    return { status };
+  }
+
+  const unsupportedStatus = status !== "new" && status !== "changed";
+  if (unsupportedStatus) throw new Error(`${path}.status must be existing, new or changed`);
+  const reuse = requireRecord(record.reuse, `${path}.reuse`);
+  rejectUnknownKeys(reuse, ["checked", "why"], `${path}.reuse`);
+  return {
+    status,
+    reuse: {
+      checked: requireNonBlankString(reuse.checked, `${path}.reuse.checked`),
+      why: requireNonBlankString(reuse.why, `${path}.reuse.why`),
+    },
+  };
+}
+
 function validateSchema(candidate: unknown): Schema {
   const schema = requireRecord(candidate, "schema");
   rejectUnknownKeys(schema, ["title", "subtitle", "tables", "links"], "schema");
@@ -63,7 +88,7 @@ function validateSchema(candidate: unknown): Schema {
   const tables = requireArray(schema.tables, "tables").map((candidate, index) => {
     const path = `tables[${index}]`;
     const table = requireRecord(candidate, path);
-    rejectUnknownKeys(table, ["id", "group", "caption", "columns"], path);
+    rejectUnknownKeys(table, ["id", "group", "caption", "columns", "status", "reuse"], path);
     const id = requireNonBlankString(table.id, `${path}.id`);
     const duplicateTable = tablesById.has(id);
     if (duplicateTable) throw new Error(`Duplicate table: ${id}`);
@@ -72,12 +97,13 @@ function validateSchema(candidate: unknown): Schema {
     const columns = requireArray(table.columns, `${path}.columns`).map((candidate, index) => {
       const columnPath = `${path}.columns[${index}]`;
       const column = requireRecord(candidate, columnPath);
-      rejectUnknownKeys(column, ["name", "type", "pk", "fk", "unique", "values"], columnPath);
+      rejectUnknownKeys(column, ["name", "type", "pk", "fk", "unique", "values", "status", "reuse"], columnPath);
       const columnName = requireNonBlankString(column.name, `${columnPath}.name`);
       const duplicateColumn = columnNames.has(columnName);
       if (duplicateColumn) throw new Error(`Duplicate column: ${id}.${columnName}`);
       columnNames.add(columnName);
       return {
+        ...requireDesignChange(column, `Table ${id}, column ${columnName}`),
         name: columnName,
         type: requireNonBlankString(column.type, `${columnPath}.type`),
         pk: requireFlag(column.pk, `${columnPath}.pk`),
@@ -89,7 +115,8 @@ function validateSchema(candidate: unknown): Schema {
     const hasNoColumns = columns.length === 0;
     if (hasNoColumns) throw new Error(`${path}.columns must contain at least one column`);
 
-    const validatedTable = {
+    const validatedTable: Table = {
+      ...requireDesignChange(table, `Table ${id}`),
       id,
       group: requireNonBlankString(table.group, `${path}.group`),
       caption: requireString(table.caption, `${path}.caption`),

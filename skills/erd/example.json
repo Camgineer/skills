@@ -37,12 +37,17 @@
     },
     {
       "id": "order_lines_with_individual_gift_wrapping_preferences",
+      "status": "new",
+      "reuse": {
+        "checked": "orders",
+        "why": "An order contains several books with separate gift options."
+      },
       "group": "Sales",
       "caption": "Books and gift options for each purchase",
       "columns": [
         { "name": "order_id", "type": "bigint", "pk": true, "fk": true },
         { "name": "book_id", "type": "bigint", "pk": true, "fk": true },
-        { "name": "personalized_gift_message_for_the_recipient", "type": "varchar(500)" },
+        { "name": "personalized_gift_message_for_the_recipient", "type": "varchar(500)", "status": "changed", "reuse": { "checked": "personalized_gift_message_for_the_recipient varchar(200)", "why": "Gift messages need up to 500 characters." } },
         { "name": "quantity", "type": "integer" }
       ]
     }

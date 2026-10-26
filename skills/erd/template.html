@@ -52,6 +52,7 @@
   .t { position: absolute; width: max-content; min-width: 250px; border-radius: 12px; background: var(--card); box-shadow: 0 0 0 1px var(--rule), 0 3px 4px #312c3504, 0 12px 26px #312c3508; transition: opacity var(--hover) ease; }
   .h { --ink: #312c35; --muted: #51405d; display: block; width: 100%; text-align: left; padding: 12px 14px; border: 0; border-radius: 12px 12px 0 0; background: var(--group); color: var(--ink); cursor: pointer; font: inherit; }
   .h strong { display: block; font-size: 15px; font-weight: 650; white-space: nowrap; }
+  .h .key { color: var(--ink); background: transparent; border: 1px solid currentColor; margin-top: 5px; }
   .h small { display: block; margin-top: 3px; color: var(--muted); font-size: 12px; white-space: nowrap; }
   .t ol { list-style: none; margin: 0; padding: 5px 0; font: 12px/1.4 "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
   .t li { display: flex; align-items: center; gap: 22px; padding: 0 14px; min-height: 30px; white-space: nowrap; border-top: 1px solid var(--rule); }
@@ -230,6 +231,8 @@ function buildTables() {
     const header = element("button", "h", "");
     header.type = "button";
     header.append(element("strong", "", table.id));
+    const tableChanged = table.status !== "existing";
+    if (tableChanged) header.append(element("b", "key", table.status.toUpperCase()));
     const hasCaption = table.caption.length > 0;
     if (hasCaption) header.append(element("small", "", table.caption));
     const columns = element("ol", "", "");
@@ -243,6 +246,8 @@ function buildTables() {
       if (column.fk) label.append(element("b", "key fk", "FK"));
       if (column.unique) label.append(element("b", "key uq", "UQ"));
       label.append(document.createTextNode(column.name));
+      const columnChanged = column.status !== "existing";
+      if (columnChanged) label.append(element("b", "key", column.status.toUpperCase()));
       row.append(label, element("span", "ty", compactType(column.type)));
       rowByEndpoint.set(endpointKey({ table: table.id, column: column.name }), row);
       columns.append(row);
@@ -346,6 +351,12 @@ function renderPanel() {
   const linkSuffix = hasLinks && !selection.isLine ? ` · ${linkCount} ${linkWord}` : "";
   const tableSuffix = hasConnectedTables ? `, ${selection.connected} ${selection.connected === 1 ? "table" : "tables"}` : "";
   tip.append(element("h2", "", `${selection.title}${linkSuffix}${tableSuffix}`));
+  const reuse = selection.column?.reuse ?? selection.table?.reuse;
+  const hasReuse = reuse !== undefined;
+  if (hasReuse) {
+    tip.append(element("p", "", `Checked: ${reuse.checked}`));
+    tip.append(element("p", "", `Why new: ${reuse.why}`));
+  }
   const column = selection.column;
   if (column) {
     tip.append(element("p", "", column.type));
@@ -481,7 +492,7 @@ function bindTables() {
     const attached = edgeElements.filter(edge => card.contains(document.getElementById(edge.dataset.fkRow)) || card.contains(document.getElementById(edge.dataset.pkRow)));
     const connected = new Set(attached.flatMap(edge => [edge.dataset.fkRow, edge.dataset.pkRow]).map(id => document.getElementById(id).closest(".t")));
     connected.delete(card);
-    const details = { edges: attached, title: table.id, card, connected: connected.size };
+    const details = { edges: attached, title: table.id, table, card, connected: connected.size };
     bindHighlight(card.querySelector(".h"), details);
     card.addEventListener("click", event => {
       const isCardBackground = event.target === card || event.target === card.querySelector("ol");

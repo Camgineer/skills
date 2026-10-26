@@ -1,5 +1,5 @@
-import { readFile, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { readFile, realpath, writeFile } from "node:fs/promises";
+import { isAbsolute, join, relative } from "node:path";
 
 type DesignChange =
   | { status: "existing"; reuse?: never }
@@ -8,7 +8,7 @@ type Column = DesignChange & { name: string; type: string; pk?: boolean; fk?: bo
 type Table = DesignChange & { id: string; group: string; caption: string; columns: Column[] };
 type Endpoint = { table: string; column: string };
 type Link = { fk: Endpoint; pk: Endpoint; soft?: boolean };
-type Schema = { title: string; subtitle?: string; tables: Table[]; links: Link[] };
+type Schema = { title: string; subtitle?: string; reuseRoot?: string; tables: Table[]; links: Link[] };
 
 function requireRecord(candidate: unknown, path: string): Record<string, unknown> {
   const isRecord = typeof candidate === "object" && candidate !== null && !Array.isArray(candidate);
@@ -73,10 +73,16 @@ function requireDesignChange({ record, path }: {
   if (unsupportedStatus) throw new Error(`${path}.status must be existing, new or changed`);
   const reuse = requireRecord(record.reuse, `${path}.reuse`);
   rejectUnknownKeys(reuse, ["checked", "why"], `${path}.reuse`);
+  const checked = requireNonBlankString(reuse.checked, `${path}.reuse.checked`);
+  const references = checked.split(",").map(reference => reference.trim());
+  const invalidReference = references.some(reference =>
+    !/^(?:[^/,:\r\n]+\/)*[^/,:\r\n]+\.[\w-]+:[A-Za-z_$][\w$]*$/.test(reference),
+  );
+  if (invalidReference) throw new Error(`${path}.reuse.checked must name path/to/file.ext:SymbolName (comma-separated)`);
   return {
     status,
     reuse: {
-      checked: requireNonBlankString(reuse.checked, `${path}.reuse.checked`),
+      checked,
       why: requireNonBlankString(reuse.why, `${path}.reuse.why`),
     },
   };
@@ -84,9 +90,12 @@ function requireDesignChange({ record, path }: {
 
 function validateSchema(candidate: unknown): Schema {
   const schema = requireRecord(candidate, "schema");
-  rejectUnknownKeys(schema, ["title", "subtitle", "tables", "links"], "schema");
+  rejectUnknownKeys(schema, ["title", "subtitle", "reuseRoot", "tables", "links"], "schema");
   const title = requireNonBlankString(schema.title, "title");
   const subtitle = schema.subtitle === undefined ? undefined : requireString(schema.subtitle, "subtitle");
+  const reuseRoot = schema.reuseRoot === undefined ? undefined : requireNonBlankString(schema.reuseRoot, "reuseRoot");
+  const relativeRoot = reuseRoot !== undefined && !isAbsolute(reuseRoot);
+  if (relativeRoot) throw new Error("reuseRoot must be an absolute repo path");
   const tablesById = new Map<string, Table>();
   const tables = requireArray(schema.tables, "tables").map((candidate, index) => {
     const path = `tables[${index}]`;
@@ -185,7 +194,57 @@ function validateSchema(candidate: unknown): Schema {
     const missingReferencedKey = !referencedColumn.pk && !referencedColumn.unique;
     if (missingReferencedKey) throw new Error(`${referencedEndpoint.table}.${referencedEndpoint.column} must have pk: true or unique: true`);
   }
-  return { title, subtitle, tables, links };
+  return { title, subtitle, reuseRoot, tables, links };
+}
+
+async function validateReuse(schema: Schema): Promise<void> {
+  const reasons = new Map<string, string>();
+  const misses: string[] = [];
+  const root = schema.reuseRoot === undefined ? undefined : await realpath(schema.reuseRoot);
+  for (const table of schema.tables) {
+    const elements = [
+      { change: table, path: `Table ${table.id}`, names: [table.id, table.caption] },
+      ...table.columns.map(column => ({
+        change: column,
+        path: `Table ${table.id}, column ${column.name}`,
+        names: [table.id, table.caption, column.name],
+      })),
+    ];
+    for (const { change, path, names } of elements) {
+      const existing = change.status === "existing";
+      if (existing) continue;
+      let reason = change.reuse.why.toLowerCase();
+      const ownNames = names.map(name => name.toLowerCase()).filter(Boolean).sort((a, b) => b.length - a.length);
+      for (const name of ownNames) reason = reason.split(name).join("");
+      reason = reason.replace(/\s+/g, " ").trim();
+      const previous = reasons.get(reason);
+      const duplicate = previous !== undefined;
+      if (duplicate) throw new Error(`${path}.reuse.why repeats ${previous}.reuse.why after removing element names`);
+      reasons.set(reason, path);
+
+      const skipSourceCheck = root === undefined;
+      if (skipSourceCheck) continue;
+      for (const reference of change.reuse.checked.split(",")) {
+        const [file, symbol] = reference.trim().split(":");
+        try {
+          const source = await realpath(join(root, file));
+          const relativeSource = relative(root, source);
+          const outsideRoot = relativeSource === ".." || relativeSource.startsWith("../") || isAbsolute(relativeSource);
+          if (outsideRoot) {
+            misses.push(`${path}.reuse.checked: ${file} is outside reuseRoot`);
+            continue;
+          }
+          const contents = await readFile(source, "utf8");
+          const missingSymbol = !contents.includes(symbol);
+          if (missingSymbol) misses.push(`${path}.reuse.checked: ${file} does not contain ${symbol}`);
+        } catch (error) {
+          misses.push(`${path}.reuse.checked: cannot read ${file}: ${diagnosticMessage(error)}`);
+        }
+      }
+    }
+  }
+  const hasMisses = misses.length > 0;
+  if (hasMisses) throw new Error(misses.join("\n"));
 }
 
 async function generate(): Promise<void> {
@@ -203,6 +262,7 @@ async function generate(): Promise<void> {
     throw new Error(`${source} is not valid JSON: ${diagnostic}`, { cause: error });
   }
   const schema = validateSchema(parsedSchema);
+  await validateReuse(schema);
   const template = await readFile(join(import.meta.dirname, "template.html"), "utf8");
   const embeddedSchema = JSON.stringify(schema).replaceAll("<", "\\u003c");
   const html = template.replace("{{SCHEMA_JSON}}", () => embeddedSchema);

@@ -57,7 +57,10 @@ function requireAllowedValues(candidate: unknown, path: string): string[] | unde
   return requireArray(candidate, path).map((value, index) => requireString(value, `${path}[${index}]`));
 }
 
-function requireDesignChange(record: Record<string, unknown>, path: string): DesignChange {
+function requireDesignChange({ record, path }: {
+  record: Record<string, unknown>;
+  path: string;
+}): DesignChange {
   const status = record.status === undefined ? "existing" : record.status;
   const existing = status === "existing";
   if (existing) {
@@ -103,7 +106,7 @@ function validateSchema(candidate: unknown): Schema {
       if (duplicateColumn) throw new Error(`Duplicate column: ${id}.${columnName}`);
       columnNames.add(columnName);
       return {
-        ...requireDesignChange(column, `Table ${id}, column ${columnName}`),
+        ...requireDesignChange({ record: column, path: `Table ${id}, column ${columnName}` }),
         name: columnName,
         type: requireNonBlankString(column.type, `${columnPath}.type`),
         pk: requireFlag(column.pk, `${columnPath}.pk`),
@@ -116,7 +119,7 @@ function validateSchema(candidate: unknown): Schema {
     if (hasNoColumns) throw new Error(`${path}.columns must contain at least one column`);
 
     const validatedTable: Table = {
-      ...requireDesignChange(table, `Table ${id}`),
+      ...requireDesignChange({ record: table, path: `Table ${id}` }),
       id,
       group: requireNonBlankString(table.group, `${path}.group`),
       caption: requireString(table.caption, `${path}.caption`),

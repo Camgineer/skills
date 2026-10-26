@@ -15,16 +15,35 @@ test("unjustified design changes cannot produce a review diagram", async () => {
   const invalidNotes = [undefined, null, {}, { ...reuse, checked: " \t" }, { ...reuse, why: "\n" }];
   try {
     for (const scope of ["table", "column"]) {
+      const columnScope = scope === "column";
       for (const status of ["new", "changed"]) {
         for (const reuse of invalidNotes) {
           const change = { status, reuse };
-          const column = { name: "gift_message", type: "text", ...(scope === "column" ? change : {}) };
-          const table = { id: "order_lines", group: "Sales", caption: "", columns: [column], ...(scope === "table" ? change : {}) };
-          await writeFile(source, JSON.stringify({ title: "Shop", tables: [table], links: [] }));
-          const generation = spawnSync(process.execPath, [generator.pathname, source, destination], { encoding: "utf8" });
+          const column = {
+            name: "gift_message",
+            type: "text",
+            ...(columnScope ? change : {}),
+          };
+          const table = {
+            id: "order_lines",
+            group: "Sales",
+            caption: "",
+            columns: [column],
+            ...(!columnScope ? change : {}),
+          };
+          await writeFile(source, JSON.stringify({
+            title: "Shop",
+            tables: [table],
+            links: [],
+          }));
+          const generation = spawnSync(
+            process.execPath,
+            [generator.pathname, source, destination],
+            { encoding: "utf8" },
+          );
           assert.equal(generation.status, 1, generation.stdout);
           assert.match(generation.stderr, /Table order_lines/);
-          if (scope === "column") assert.match(generation.stderr, /column gift_message/);
+          if (columnScope) assert.match(generation.stderr, /column gift_message/);
           assert.match(generation.stderr, /reuse/);
         }
       }
@@ -41,12 +60,31 @@ test("existing elements reject reuse notes while justified changes survive gener
   const reuse = { checked: "orders.notes", why: "Each book needs its own gift message." };
   try {
     for (const scope of ["table", "column"]) {
+      const columnScope = scope === "column";
       for (const status of [undefined, "existing", "new", "changed", "invalid", null]) {
         const change = { status, reuse };
-        const column = { name: "gift_message", type: "text", ...(scope === "column" ? change : {}) };
-        const table = { id: "order_lines", group: "Sales", caption: "", columns: [column], ...(scope === "table" ? change : {}) };
-        await writeFile(source, JSON.stringify({ title: "Shop", tables: [table], links: [] }));
-        const generation = spawnSync(process.execPath, [generator.pathname, source, destination], { encoding: "utf8" });
+        const column = {
+          name: "gift_message",
+          type: "text",
+          ...(columnScope ? change : {}),
+        };
+        const table = {
+          id: "order_lines",
+          group: "Sales",
+          caption: "",
+          columns: [column],
+          ...(!columnScope ? change : {}),
+        };
+        await writeFile(source, JSON.stringify({
+          title: "Shop",
+          tables: [table],
+          links: [],
+        }));
+        const generation = spawnSync(
+          process.execPath,
+          [generator.pathname, source, destination],
+          { encoding: "utf8" },
+        );
         const justifiedChange = status === "new" || status === "changed";
         assert.equal(generation.status, justifiedChange ? 0 : 1, generation.stderr);
         if (justifiedChange) {
@@ -55,12 +93,25 @@ test("existing elements reject reuse notes while justified changes survive gener
           assert.ok(html.includes('"status":"' + status + '"'));
         } else {
           assert.match(generation.stderr, /Table order_lines/);
-          if (scope === "column") assert.match(generation.stderr, /column gift_message/);
+          if (columnScope) assert.match(generation.stderr, /column gift_message/);
         }
       }
     }
-    await writeFile(source, JSON.stringify({ title: "Shop", tables: [{ id: "orders", group: "Sales", caption: "", columns: [{ name: "id", type: "bigint" }] }], links: [] }));
-    const generation = spawnSync(process.execPath, [generator.pathname, source, destination], { encoding: "utf8" });
+    await writeFile(source, JSON.stringify({
+      title: "Shop",
+      tables: [{
+        id: "orders",
+        group: "Sales",
+        caption: "",
+        columns: [{ name: "id", type: "bigint" }],
+      }],
+      links: [],
+    }));
+    const generation = spawnSync(
+      process.execPath,
+      [generator.pathname, source, destination],
+      { encoding: "utf8" },
+    );
     assert.equal(generation.status, 0, generation.stderr);
     assert.ok((await readFile(destination, "utf8")).includes('"status":"existing"'));
   } finally {

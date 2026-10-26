@@ -352,7 +352,8 @@ function renderPanel() {
   const tableSuffix = hasConnectedTables ? `, ${selection.connected} ${selection.connected === 1 ? "table" : "tables"}` : "";
   tip.append(element("h2", "", `${selection.title}${linkSuffix}${tableSuffix}`));
   const reuse = selection.column?.reuse ?? selection.table?.reuse;
-  if (reuse) {
+  const hasReuse = reuse !== undefined;
+  if (hasReuse) {
     tip.append(element("p", "", `Checked: ${reuse.checked}`));
     tip.append(element("p", "", `Why new: ${reuse.why}`));
   }

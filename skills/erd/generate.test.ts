@@ -192,8 +192,9 @@ test("source checks reject every missing reference and accept real symbols only 
         links: [],
       }));
       const generation = spawnSync(process.execPath, [generator.pathname, source, destination], { encoding: "utf8" });
-      assert.equal(generation.status, diagnostic ? 1 : 0, generation.stderr);
-      if (diagnostic) {
+      const expectsDiagnostic = diagnostic !== undefined;
+      assert.equal(generation.status, expectsDiagnostic ? 1 : 0, generation.stderr);
+      if (expectsDiagnostic) {
         assert.match(generation.stderr, diagnostic);
         const sourceFailure = reuseRoot !== "relative/path";
         if (sourceFailure) assert.match(generation.stderr, /Table order_lines.reuse.checked/);

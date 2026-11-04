@@ -12,6 +12,8 @@ Swag's shared principles and surface guidance are original work under the [Apach
 | web-design-guidelines | Vercel | [Official skill](https://github.com/vercel-labs/agent-skills/tree/main/skills/web-design-guidelines) | Missing or unclear for the skill itself. Neither the inspected upstream skill folder nor the repository root declares a license. Swag references it by name and copies no instruction text. |
 | dataviz, optional | From the selected host copy; unverified | Read the selected copy's source metadata; no canonical package is pinned. | License unverified until that copy is inspected. No material is bundled. |
 
+The signoff checklist in Finish with evidence adapts ideas from OpenAI's [playwright-interactive skill](https://github.com/openai/skills) ([Apache-2.0](https://github.com/openai/skills/blob/main/LICENSE)). Swag copies no instruction text.
+
 For a host-provided dataviz companion, preserve its author, canonical source, and license when crediting the work; report missing provenance and copy none of its material.
 
 The web-design-guidelines skill fetches a separate resource, [Web Interface Guidelines](https://github.com/vercel-labs/web-interface-guidelines), by Vercel Labs. That resource has an [MIT license](https://github.com/vercel-labs/web-interface-guidelines/blob/main/LICENSE). Its license is distinct from the skill's missing license. Swag does not bundle that resource.

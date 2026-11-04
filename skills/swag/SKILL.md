@@ -66,3 +66,5 @@ Resolve the writing companions specified in [Shared design principles](#shared-d
 ## Finish with evidence
 
 Inspect the actual result in its delivery medium using the route's checks. Verify the applicable principles against real content and states. For mixed artifacts, check the combined result as well as its parts. Report the visual direction, selected routes, companion outcomes, and unresolved issues. Include rendered comparisons or captures where available and say which checks actually ran. A screenshot proves appearance at that state; interaction, data accuracy, export fidelity, and accessibility need their own checks.
+
+Before signing off an interface change, list every requirement, every behavior you built, and every claim your report will make, and map each to at least one check. Add at least two scenarios off the happy path, and run every toggle through a full cycle. Inspect the first view, the densest realistic state, and a smaller realistic size. When a capture shows clipping or overlap, it outranks any numeric check: measure each region's own bounds, not the page's scroll size.

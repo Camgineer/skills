@@ -66,6 +66,7 @@ Replace these on sight. For documents, PRs, skills, and rewrites, also check the
 5. Search for em dash and en dash characters and replace each one.
 6. When revising, compare the result with the original. It adds no fact, name, number, date, quote, or claim the original lacks, and drops none that still applies. Each claim keeps its certainty. A shorter "failed" for "may have failed" is a new claim, so keep the hedge. When a sentence needs a detail you do not have, ask for it or write a simpler sentence.
 7. Read once at normal speed. Revise anything that sounds scripted, stiff, or vague.
+8. When a shell is available, run `node scripts/prose-check.ts <draft-file>` from this skill's folder and fix every strong hit.
 
 ## Report the work
 

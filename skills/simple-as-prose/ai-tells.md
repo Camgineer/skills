@@ -1,6 +1,6 @@
 # AI tells
 
-The full catalog for documents, PRs, skills, and rewrites. Each entry names the pattern and its fix. Adapted from unslop in PStack by Lauren Tan, MIT, https://github.com/cursor/plugins/tree/main/pstack/skills/unslop. The staging and framing entries, Strength, and When not to act adapt humanizer by Siqi Chen, MIT, https://github.com/blader/humanizer, which draws on Wikipedia's Signs of AI writing.
+The full catalog for documents, PRs, skills, and rewrites. Each entry names the pattern and its fix. Adapted from unslop in PStack by Lauren Tan, MIT, https://github.com/cursor/plugins/tree/main/pstack/skills/unslop. The staging and framing entries, Strength, and When not to act adapt humanizer by Siqi Chen, MIT, https://github.com/blader/humanizer, which draws on Wikipedia's Signs of AI writing. The vague-connection, hype, "refers to", placeholder, rendering, and link entries adapt the ste100 slop patterns in eStack by explainx.ai, MIT, https://github.com/whyashthakker/estack.
 
 After fixing every match, ask what still makes the text read as machine-written, and fix that too.
 
@@ -9,11 +9,15 @@ After fixing every match, ask what still makes the text read as machine-written,
 - **Trailing "-ing" phrases** such as "highlighting...", "ensuring...", "reflecting...", or "fostering...". Name the actor and the action, or delete the phrase.
 - **Vague attributions** such as "experts believe" or "industry reports suggest". Name the source or delete the claim.
 - **Generic conclusions** such as "the future looks bright". State the specific plan or fact.
+- **Vague connections** such as "associated with", "connected to", or "in connection with" when the text never says how. Name the link: caused, is part of, replaced.
+- **Hype words** such as seamless, robust, powerful, cutting-edge, game-changer, unlock, supercharge, or elevate. Say what changes, with a number when you have one.
 - **Feelings in place of mechanisms.** "SQL you can read" names a feeling. "`.toSQL()` returns the exact string sent to the database" names the mechanism. If a sentence could appear unchanged in another project's docs, it says nothing about this one, so cut it.
 
 ## Language
 
 - **Stock AI words.** Additionally, crucial, delve, enduring, enhance, fostering, garner, interplay, intricate, landscape, pivotal, showcase, tapestry, testament, underscore, vibrant. Use the plain word.
+- **"Refers to" leads**, as in "X refers to a framework that", when the text is about X and not the word. Write "X is a framework that".
+- **Paragraph-opening transitions** such as "Furthermore,", "Moreover,", or "Notably," at the start of most paragraphs. Delete them and order the paragraphs so the link is clear.
 - **Fancy ways to say "is"**, such as "serves as", "stands as", "boasts", or "features". Write "is" or "has".
 - **Inflated words.** "Utilize" and "leverage" become "use". "Facilitate" becomes "help". "Numerous" becomes "many". "In the event that" becomes "if".
 - **Contrast framing** such as "not just X, but Y". State the point.
@@ -34,12 +38,16 @@ After fixing every match, ask what still makes the text read as machine-written,
 - **Title Case Headings.** Use sentence case.
 - **Decorative emoji** in headings and bullets. Remove them.
 - **Curly quotes.** Use straight quotes.
+- **Markdown where it will not render**, such as `**bold**` or `##` in a commit message, an email, or a plain-text field. Use the target's own format.
+- **Headings over tiny sections.** Merge sections of a line or two into their neighbours.
 
 ## Conversation
 
 - **Chatbot phrases** such as "I hope this helps!", "Let me know if...", "Of course!", or "Certainly!". Remove them.
 - **Sycophancy** such as "Great question!" or "You're absolutely right!". Respond to the substance.
 - **Filler phrases.** "In order to" becomes "to". "Due to the fact that" becomes "because". "It is important to note that" is deleted.
+- **Leftover placeholders** such as "[Insert date]", "YYYY-MM-DD", or "example.com". Fill in the real value or remove the line.
+- **Several versions when one was asked for.** Give the one result.
 - **Stacked hedges** such as "could potentially possibly". Use one hedge, such as "may".
 
 ## Density
@@ -55,6 +63,12 @@ After fixing every match, ask what still makes the text read as machine-written,
 - **Arguing with no one**, such as "To be clear", "I'm not saying", "This isn't about", or "You might think... but", when nobody raised the objection or option. Cut the rebuttal and state the claim. Keep an objection the text attributes or answers in full, and an option the reader would actually weigh.
 - **Writing about the document instead of its subject**, such as "this was added to replace", "compiled from", or "the table below compares". Describe the subject. Mention a previous version only in change logs, release notes, and migration guides. Keep a source credit the reader can follow and a caveat that changes what the reader does.
 - **Re-explaining what the reader knows.** A reply that restates the problem, diagnosis, or evidence the reader already has before reaching the decision. Lead with the decision and keep only the reasoning the reader lacks.
+
+## Links
+
+- **Links you have not opened.** Open each one before you cite it, and check it supports the claim.
+- **Search-result links.** Link the primary source.
+- **Tracking parameters** such as `utm_source=`. Remove them.
 
 ## Strength
 
